@@ -706,6 +706,7 @@ def hutch_loop(expt, date_path, summ, fields, errs):
                 signal_check(path,11,'SIGSEGV')
                 transition_check(path)
                 outoforder_check(path)
+                stat_check(path)
                 pgpproblem_check(path)
     if expt=='local':
         path = os.getenv('HOME')+'/'+date_path
@@ -719,6 +720,7 @@ def hutch_loop(expt, date_path, summ, fields, errs):
             signal_check(path,11,'SIGSEGV')
             transition_check(path)
             outoforder_check(path)
+            stat_check(path)
             pgpproblem_check(path)
             
 def daterange(start_date, end_date):
@@ -806,6 +808,21 @@ def transition_check(path):
                     print fmtstr%trans_time+longfmtstr%transition+longfmtstr%task['name']+fmtstr%task['pid']+longfmtstr%task['node']
                 except:
                     pass
+
+def stat_check(path):
+    print_header = True
+    flist = glob.glob(path+"*event*.log")
+    args = ["grep", "Cannot"]+flist
+    p = subprocess.Popen(args=args, stdout=subprocess.PIPE)
+    output = p.communicate()[0].split('\n')
+    for line in output:
+        if (len(line) != 0) and (line.find("stat") != -1) and (line.find("file") != -1):
+            if print_header:
+                print "\nStat errors:"
+                print_header = False
+            print line
+    print ""
+    
 
 def outoforder_check(path):
     noo = 0
@@ -942,11 +959,14 @@ def pgpproblem_check(path):
 def get_current_pdsdata():
     dirlist = []
     releases = []
-    dirlist += os.listdir(COMMON_PATH + 'pdsdata')
+    dirlist = glob.glob(COMMON_PATH + 'pdsdata/*')
+#    dirlist.sort(key=lambda x: os.path.getmtime(x))
     for dir in dirlist:
-        if re.search('^(?:(\d+)\.)?(?:(\d+)\.)?(\*|\d+)', dir):
+        if re.search('(?:(\d+)\.)?(?:(\d+)\.)?(\*|\d+)', dir):
             releases.append(dir)
-    return releases.pop()
+    latest_file = max(releases, key=os.path.getmtime)
+    pdsdata = latest_file.strip(COMMON_PATH+'pdsdata/')
+    return pdsdata
 
 def read_bldinfo(pdsdata):
     bld = []
