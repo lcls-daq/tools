@@ -1,29 +1,44 @@
 #!/bin/bash
 #
+BUILD32=true
 
 function make_link()
 {
-  if [ ! -e $1/x86_64-linux ]; then
-    ln -s $2-opt $1/x86_64-linux
+  if [ ! -e $1/$2 ]; then
+    ln -s $2-opt $1/$2
   fi
 }
 
-make i386-linux-opt.clean
-make i386-linux.dbg.clean
+for i in "$@"
+do
+if [[ "$i" == "--no32" ]] ; then
+  BUILD32=false
+fi
+done
 
 x86_64_arch='unknown'
 if [[ `uname -r` == *el5* ]]; then
   x86_64_arch='x86_64-linux'
 elif [[ `uname -r` == *el6* ]]; then
   x86_64_arch='x86_64-rhel6'
+  BUILD32=false
+elif [[ `uname -r` == *el7* ]]; then
+  x86_64_arch='x86_64-rhel7'
+  BUILD32=false
+fi
+
+if [[ "$BUILD32" == true ]] ; then
+  make i386-linux-opt.clean
+  make i386-linux-dbg.clean
 fi
 
 make ${x86_64_arch}-opt.clean
 make ${x86_64_arch}-dbg.clean
 
-
-make i386-linux-opt
-make i386-linux-dbg
+if [[ "$BUILD32" == true ]] ; then
+  make i386-linux-opt
+  make i386-linux-dbg
+fi
 
 make ${x86_64_arch}-opt
 make ${x86_64_arch}-dbg

@@ -24,5 +24,5 @@ fi
 /usr/bin/find tools \( -type f -o -type d \) -exec /bin/chmod 755 {} \;
 
 # create the tar file
-/bin/tar czvf $1 --exclude=.svn --exclude=dep --exclude=obj --exclude=.buildbot-sourcedata build tools
+/bin/tar czvf $1 --exclude=.svn --exclude=.git --exclude=dep --exclude=obj --exclude=.buildbot-sourcedata build tools
 

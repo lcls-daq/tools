@@ -16,18 +16,20 @@ if [[ "$i" == "--no32" ]] ; then
 fi
 done
 
-if [[ "$BUILD32" == true ]] ; then
-  make i386-linux-opt
-  make i386-linux-dbg
-fi
-
 x86_64_arch='unknown'
 if [[ `uname -r` == *el5* ]]; then
   x86_64_arch='x86_64-linux'
 elif [[ `uname -r` == *el6* ]]; then
   x86_64_arch='x86_64-rhel6'
+  BUILD32=false
 elif [[ `uname -r` == *el7* ]]; then
   x86_64_arch='x86_64-rhel7'
+  BUILD32=false
+fi
+
+if [[ "$BUILD32" == true ]] ; then
+  make i386-linux-opt
+  make i386-linux-dbg
 fi
 
 make ${x86_64_arch}-opt
