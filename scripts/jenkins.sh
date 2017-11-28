@@ -23,4 +23,9 @@ do
     fi
 done
 
-tools/scripts/tarcreate.sh pdsbuild-pdsapp-${buildtype}-${BUILD_NUMBER}-${SVN_REVISION}.tar.gz
+version="${1-$GIT_COMMIT}"
+tarball="pdsbuild-pdsapp-${buildtype}-${BUILD_NUMBER}-${version}.tar.gz"
+
+tools/scripts/tarcreate.sh "$tarball"
+chmod 444 "$tarball"
+mv "$tarball" /reg/g/pcds/dist/pds/ci-artifacts/
