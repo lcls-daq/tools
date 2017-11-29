@@ -27,7 +27,7 @@ tag="${1}"
 version="${1-$GIT_COMMIT}"
 tarball="pdsbuild-ami-${buildtype}-b${BUILD_NUMBER}-${version}.tar.gz"
 
-tools/scripts/tarcreate.sh "$tarball"
+tools/scripts/tarcreate_ami.sh "$tarball"
 chmod 444 "$tarball"
 if [ -z "$tag" ]; then
   mv "$tarball" /reg/g/pcds/dist/pds/ci-artifacts/
