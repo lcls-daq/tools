@@ -4,14 +4,14 @@
 
 function show_help()
 {
-    echo    "Usage: $0 -u URL -d DEST [-r REV] [-b BRANCH | -t TAG] [-h]"
+    echo    "Usage: $0 -u URL -d DEST [-b BRANCH | -t TAG] [-h]"
 }
 
 # if no branch or tag is specified, checkout from the trunk
 flavor="trunk"
 
 OPTIND=1
-while getopts ":hu:d:r:b:t:" opt; do
+while getopts ":hu:d:b:t:" opt; do
     case "$opt" in
     h)
         # help
@@ -27,11 +27,9 @@ while getopts ":hu:d:r:b:t:" opt; do
         ;;
     d)  release_dir=$OPTARG
         ;;
-    r)  rev="-r $OPTARG"
+    b)  flavor="$OPTARG"
         ;;
-    b)  flavor="branches/$OPTARG"
-        ;;
-    t)  flavor="tags/$OPTARG"
+    t)  flavor="$OPTARG"
         ;;
     esac
 done
@@ -67,6 +65,11 @@ fi
 # exit immediately if a command exits with a non-zero status
 set -e
 
-/usr/bin/svn co $rev $url/ami-release/$flavor  $release_dir
+/usr/bin/git clone --recursive $url/ami-release.git $release_dir
+if [ -n "$flavor" ]; then
+  cd $release_dir
+  /usr/bin/git checkout "$flavor"
+  /usr/bin/git submodule update
+fi
 
 exit 0
