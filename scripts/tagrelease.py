@@ -31,7 +31,7 @@ def make_tag(pkg):
 
 def verify_tag(pkg):
     rv = False
-    p = subprocess.Popen(['/usr/bin/svn info '+DAQURL+'/'+pkg+'/tags/'+tag], shell = True,
+    p = subprocess.Popen(['/usr/bin/git tag -l '+tag], cwd = pkg, shell = True,
                          stdout = subprocess.PIPE, stderr = subprocess.PIPE, close_fds = True)
     if subprocess.Popen.communicate(p)[0]:
         rv = True
@@ -51,8 +51,20 @@ def checkout(tmpdir, project):
     p = subprocess.Popen([cmd], shell = True, stdout = subprocess.PIPE, close_fds = True)
     return subprocess.Popen.communicate(p)[0]
 
-def get_externals_property(project_path):
-    p = subprocess.Popen(['/usr/bin/svn propget svn:externals '+project_path], shell = True, stdout = subprocess.PIPE, close_fds = True)
+def fetch(project_path):
+    p = subprocess.Popen(['/usr/bin/git fetch origin'], cwd = project_path, shell = True, stdout = subprocess.PIPE, close_fds = True)
+    return subprocess.Popen.communicate(p)[0]
+
+def fetch_tags(project_path):
+    p = subprocess.Popen(['/usr/bin/git fetch origin --tags'], cwd = project_path, shell = True, stdout = subprocess.PIPE, close_fds = True)
+    return subprocess.Popen.communicate(p)[0]
+
+def status(project_path):
+    p = subprocess.Popen(['/usr/bin/git status --porcelain'], cwd = project_path, shell = True, stdout = subprocess.PIPE, close_fds = True)
+    return subprocess.Popen.communicate(p)[0]
+
+def get_current_branch(project_path):
+    p = subprocess.Popen(['/usr/bin/git rev-parse --abbrev-ref HEAD'], cwd = project_path, shell = True, stdout = subprocess.PIPE, close_fds = True)
     return subprocess.Popen.communicate(p)[0]
 
 def set_externals_property(project_path, newpropvalue, oldtext, newtext):
@@ -102,9 +114,9 @@ if __name__ == '__main__':
         tag = args[0]
 
     if tag.find('ami') >= 0:
-        dirlist = ami_subdirs + ['ami-release']
+        dirlist = ami_subdirs + ['.']
     else:
-        dirlist = daq_subdirs + ['release']
+        dirlist = daq_subdirs + ['.']
 
     if not options.force:
         fail = False
@@ -113,23 +125,39 @@ if __name__ == '__main__':
             print 'sanity check failed: tag \'%s\' does not begin with \'V\' or \'ami-V\'' % tag 
             fail = True
 
-        # sanity check 2: tag does not already exist
+        # check for changes from origin
+        for dir in dirlist:
+            fetch(dir)
+            fetch_tags(dir)
+
+        # sanity check 2: check that current directory and submodules are clean
+        for dir in dirlist:
+            if status(dir):
+                print 'sanity check failed: working directory \'%s\' has uncommited changes' % dir
+                fail = True
+
+        # sanity check 3: tag does not already exist
         for dir in dirlist:
             if verify_tag(dir):
                 print 'sanity check failed: tag \'%s\' already exists for directory \'%s\'' % (tag, dir)
                 fail = True
 
-        # sanity check 3: current directory has 'trunk' in svn:externals property
-        cwdprop = get_externals_property(".")
-        if (not cwdprop) or (cwdprop.find('trunk') == -1):
-            print 'sanity check failed: working directory does not have \'trunk\' in svn:externals property' 
+        # sanity check 4: current directory is on branch master
+        cwdprop = get_current_branch(".")
+        if (not cwdprop) or (cwdprop.find('master') == -1):
+            print 'sanity check failed: working directory is not on the master branch' 
             fail = True
 
-        # sanity check 4: current directory contains expected subdirectories
+        # sanity check 5: current directory contains expected subdirectories
         for dir in dirlist:
-            if dir != 'release' and dir != 'ami-release' and not os.path.isdir(dir):
+            if dir != 'release' and dir != 'ami-release' and dir != '.' and not os.path.isdir(dir):
                 print 'sanity check failed: working directory does not include \'%s\' subdirectory' % dir
                 fail = True
+            cwdprop = get_current_branch(dir)
+            if (not cwdprop) or (cwdprop.find('master') == -1):
+                print 'sanity check failed: working directory \'%s\' is not on the master branch' % dir
+                fail = True
+
         if fail: 
             print 'tag \'%s\' not applied (sanity check failure)' % tag
             sys.exit(1)
