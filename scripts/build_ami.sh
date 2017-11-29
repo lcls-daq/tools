@@ -1,31 +1,40 @@
 #!/bin/bash
 #
-#
+CLEAN=false
+
 function make_link()
 {
-  if [ -e $1/x86_64-linux-opt ]; then
-    if [ ! -e $1/x86_64-linux ]; then
-      ln -s x86_64-linux-opt $1/x86_64-linux
-    fi
-  fi
-  if [ -e $1/x86_64-rhel6-opt ]; then
-    if [ ! -e $1/x86_64-rhel6 ]; then
-      ln -s x86_64-rhel6-opt $1/x86_64-rhel6
-    fi
-  fi
-  if [ -e $1/x86_64-rhel7-opt ]; then
-    if [ ! -e $1/x86_64-rhel7 ]; then
-      ln -s x86_64-rhel7-opt $1/x86_64-rhel7
-    fi
+  if [ ! -e $1/$2 ]; then
+    ln -s $2-opt $1/$2
   fi
 }
 
-make x86_64-linux-opt
-make x86_64-linux-dbg
-make x86_64-rhel6-opt
-make x86_64-rhel6-dbg
-make x86_64-rhel7-opt
-make x86_64-rhel7-dbg
+for i in "$@"
+do
+if [[ "$i" == "--clean" ]] ; then
+  CLEAN=true
+elif [[ "$i" == "--fail" ]] ; then
+  set -e
+  export FAILONERR=true
+fi
+done
 
-make_link build/ami/lib
+x86_64_arch='unknown'
+if [[ `uname -r` == *el5* ]]; then
+  x86_64_arch='x86_64-linux'
+elif [[ `uname -r` == *el6* ]]; then
+  x86_64_arch='x86_64-rhel6'
+elif [[ `uname -r` == *el7* ]]; then
+  x86_64_arch='x86_64-rhel7'
+fi
+
+if [[ "$CLEAN" == true ]] ; then
+  make ${x86_64_arch}-opt.clean
+  make ${x86_64_arch}-dbg.clean
+fi
+
+make ${x86_64_arch}-opt
+make ${x86_64_arch}-dbg
+
+make_link build/ami/lib ${x86_64_arch}
 

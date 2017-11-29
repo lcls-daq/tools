@@ -12,20 +12,20 @@ buildtype="unknown"
 for label in $NODE_LABELS
 do
   if [ "$label" == "rhel7" ]; then
-      tools/scripts/build.sh --clean --fail --no32
+      tools/scripts/build_ami.sh --clean --fail
       buildtype="$label"
     elif [ "$label" == "rhel6" ]; then
-      tools/scripts/build.sh --clean --fail --no32
+      tools/scripts/build_ami.sh --clean --fail
       buildtype="$label"
     elif [ "$label" == "rhel5" ]; then
-      tools/scripts/build.sh --clean --fail
+      tools/scripts/build_ami.sh --clean --fail
       buildtype="$label"
     fi
 done
 
 tag="${1}"
 version="${1-$GIT_COMMIT}"
-tarball="pdsbuild-pdsapp-${buildtype}-b${BUILD_NUMBER}-${version}.tar.gz"
+tarball="pdsbuild-ami-${buildtype}-b${BUILD_NUMBER}-${version}.tar.gz"
 
 tools/scripts/tarcreate.sh "$tarball"
 chmod 444 "$tarball"
@@ -33,5 +33,6 @@ if [ -z "$tag" ]; then
   mv "$tarball" /reg/g/pcds/dist/pds/ci-artifacts/
 else
   mv "$tarball" /reg/g/pcds/dist/pds/ci-artifacts/tags/
-  echo "$tag" > /reg/g/pcds/dist/pds/ci-artifacts/tags/new_tag
+  echo "$tag" > /reg/g/pcds/dist/pds/ci-artifacts/tags/new_tag_ami
 fi
+

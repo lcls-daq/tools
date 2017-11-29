@@ -1,6 +1,7 @@
 #!/bin/bash
 #
 BUILD32=true
+CLEAN=false
 
 function make_link()
 {
@@ -13,6 +14,11 @@ for i in "$@"
 do
 if [[ "$i" == "--no32" ]] ; then
   BUILD32=false
+elif [[ "$i" == "--clean" ]] ; then
+  CLEAN=true
+elif [[ "$i" == "--fail" ]] ; then
+  set -e
+  export FAILONERR=true
 fi
 done
 
@@ -25,6 +31,15 @@ elif [[ `uname -r` == *el6* ]]; then
 elif [[ `uname -r` == *el7* ]]; then
   x86_64_arch='x86_64-rhel7'
   BUILD32=false
+fi
+
+if [[ "$CLEAN" == true ]] ; then
+  if [[ "$BUILD32" == true ]] ; then
+    make i386-linux-opt.clean
+    make i386-linux-dbg.clean
+  fi
+  make ${x86_64_arch}-opt.clean
+  make ${x86_64_arch}-dbg.clean
 fi
 
 if [[ "$BUILD32" == true ]] ; then
