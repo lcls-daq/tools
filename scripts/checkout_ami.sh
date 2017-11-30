@@ -7,8 +7,8 @@ function show_help()
     echo    "Usage: $0 -u URL -d DEST [-b BRANCH | -t TAG] [-h]"
 }
 
-# if no branch or tag is specified, checkout from the trunk
-flavor="trunk"
+# if no branch or tag is specified, checkout from master branch
+flavor="master"
 
 OPTIND=1
 while getopts ":hu:d:b:t:" opt; do
@@ -69,7 +69,7 @@ set -e
 if [ -n "$flavor" ]; then
   cd $release_dir
   /usr/bin/git checkout "$flavor"
-  /usr/bin/git submodule update
+  /usr/bin/git submodule foreach -q --recursive "git checkout $flavor"
 fi
 
 exit 0
