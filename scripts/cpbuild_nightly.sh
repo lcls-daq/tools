@@ -20,15 +20,24 @@ fi
 
 if [[ $1 == "ami-"* ]]; then
     RELTYP="ami"
-    CURRENT="ami-current"
 else
     RELTYP="pdsapp"
-    CURRENT="current"
 fi
 
 DAQREL="/reg/g/pcds/dist/pds/$1"
-mkdir -p ${DAQREL}
+OLDREL="/reg/g/pcds/dist/pds/${1}_old"
 BOT="/reg/g/pcds/dist/pds/ci-artifacts"
+
+# delete old release
+if [ -d "${OLDREL}" ]; then
+  rm -rf $OLDREL
+fi
+# move existing to release to old
+if [ -d "${DAQREL}" ]; then
+  mv $DAQREL $OLDREL
+fi
+
+mkdir -p ${DAQREL}
 CWD=`pwd`
 cd $DAQREL
 
@@ -39,6 +48,7 @@ for i in ${DAQBOT[@]}; do DAQBOT="$i"; break; done
 echo "Copying $DAQBOT to $DAQREL"
 cp -rf $DAQBOT $DAQREL
 /bin/tar -xzf $DAQREL/*rhel5*.tar.gz
+rm -f $DAQREL/*rhel5*.tar.gz
 
 #  Copy rhel6 libraries and binaries
 #DAQBOT=$(ls -t -1 $BOT/pdsbuild-${RELTYP}-rhel6-*)
@@ -53,12 +63,8 @@ for i in ${DAQBOT[@]}; do DAQBOT="$i"; break; done
 echo "Copying $DAQBOT to $DAQREL"
 cp -rf $DAQBOT $DAQREL
 /bin/tar -xzf $DAQREL/*rhel7*.tar.gz
+rm -f $DAQREL/*rhel7*.tar.gz
 
-# Create soft link in DAQREL directory
-cd /reg/g/pcds/dist/pds
-if [ -e /reg/g/pcds/dist/pds/${CURRENT} ]; then
-    rm -f /reg/g/pcds/dist/pds/${CURRENT}
-fi
-ln -s ./$1 ${CURRENT}
+find $BOT -mindepth 1 -type f -name '*.tar.gz' -mtime +10 -delete
 
 cd $CWD
