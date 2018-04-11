@@ -3,6 +3,7 @@
 # check args
 if [ $# -ne 2 ]; then
   echo "Usage: $0 <old_tag> <new_tag>"
+  exit 1
 fi
 
 OLDTAG="${1}"
