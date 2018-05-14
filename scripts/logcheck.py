@@ -679,7 +679,7 @@ def signal_check(path, signum, signame):
 
 
 def hutch_loop(expt, date_path, summ, fields, errs):
-    hutches = ['amo','sxr','xpp','xcs','cxi','mec','cxi_0','cxi_1','cxi_shared', 'mfx', 'det']
+    hutches = ['amo','sxr','xpp','xcs','cxi','mec','cxi_0','cxi_1','cxi_shared', 'mfx_0', 'mfx_1','mfx','det']
     for hutch in hutches:
         if expt=='all' or expt==hutch.lower():
             base_path = '/reg/g/pcds/pds/'+hutch+'/logfiles/'
