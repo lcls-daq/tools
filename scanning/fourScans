@@ -1,0 +1,5 @@
+python epix10ka_scan_radtest.py -p 2 -i 3 -v 0 -V 1 -A Jack -s 4 -e 4608 -u 0
+python epix10ka_scan_radtest.py -p 2 -i 3 -v 0 -V 1 -A Jack -s 2 -e 4608 -u 0
+python epix10ka_scan_radtest.py -p 2 -i 3 -v 0 -V 1 -A Jack -s 6 -e 4608 -u 0
+python epix10ka_scan_radtest.py -p 2 -i 3 -v 0 -V 1 -A Jack -s 4 -e 4608 -u 0
+
