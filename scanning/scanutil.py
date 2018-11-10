@@ -7,8 +7,51 @@ import pprint
 from optparse import OptionParser
 
 nindent = 0
+match = False   
+gvalue = 0
+
+def get_member(d,name,m,v):
+    global match
+    global gvalue
+#    print 'name:'+name
+#    print 'm   :'+m
+    if isinstance(v,list):
+        if name.split('[')[0]==m.split('[')[0]:
+            index = name.split('[')[1].split(']')[0]
+            n = v[int(index)]
+            #  Don't try 2d arrays yet
+            if isinstance(n,list):
+                pass;
+            if isinstance(n,dict):
+                nname = name.partition('.')[2]
+                for member,value in n.items():
+                    get_member(n,nname,member,value)
+            else:
+                gvalue = d[m]
+                match = True
+    elif isinstance(v,dict):
+        fields = name.partition('.')
+        if fields[0]==m:
+            for member,value in v.items():
+                get_member(v,fields[2],member,value)
+    elif name==m:
+        gvalue = d[m]
+        match = True
+#    print match 
+
+def get_dict(d,name):
+    global match
+    global gvalue
+    match = False
+    for member,value in d.items():
+        get_member(d,name,member,value)
+        if match:
+            return gvalue
+    print 'No match found'
+    return -1
 
 def set_member(d,name,t,m,v):
+    global match
 #    print 'name:'+name
 #    print 'm   :'+m
     if isinstance(v,list):
@@ -24,8 +67,10 @@ def set_member(d,name,t,m,v):
                         nname = name.partition('.')[2]
                         for member,value in n.items():
                             set_member(n,nname,t,member,value)
+                            
                     else:
                         d[m] = t
+                        match = True
     elif isinstance(v,dict):
         fields = name.partition('.')
         if fields[0]==m:
@@ -33,10 +78,16 @@ def set_member(d,name,t,m,v):
                 set_member(v,fields[2],t,member,value)
     elif name==m:
         d[m] = t
+        match = True
+#    print match 
 
 def set_dict(d,name,target):
+    global match
+    match = False
     for member,value in d.items():
-        set_member(d,name,target,member,value)
+        set_member(d,name,target,member,value)        
+    return match
+            
 
 def dump_member(m,v):
     global nindent
@@ -231,13 +282,14 @@ def scan_exponential(device, configtype):
         if shutterActive :
             cycleLength = 2
         denom = float(options.limit+1)
-        mask = epix['AsicMask']
+#        mask = epix['AsicMask']
         values = []
         for cycle in range(options.limit+1) :
+            print cycle
             index = float(cycle%(options.limit+1)) + 1.0
             set_dict(epix,options.parameter,value)
             xtc.set(epix,cycle)
-            values.append(int(round(value)));
+            values.append(value);
             if options.linear == "no" :
 #                print cycle, int(round(value))
                 value = value * options.multiplier
