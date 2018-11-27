@@ -413,6 +413,10 @@ def scan_offset(device, configtype):
                       help="Number of events in each Dark, default=1200 ", metavar="DARKEVENTS")
     parser.add_option("-u","--user",dest="userFlag",type="int",default=1,
                       help="Iff zero then no user, default=1", metavar="DARKEVENTS")
+    parser.add_option("-o","--cycleStart",dest="cycleStart",type="int",default=0,
+                      help="Starting at cycle number, default=0", metavar="CYCLESTART")
+    parser.add_option("-O","--cycleStop",dest="cycleStop",type="int",default=0,
+                      help="Stopping at cycle number, default=100", metavar="CYCLESTOP")
 
     (options, args) = parser.parse_args()
     
@@ -434,7 +438,9 @@ def scan_offset(device, configtype):
     print 'darkEvents', options.darkEvents
     print 'events', options.events
     print 'userFlag', options.userFlag
-    
+    print 'cycleStart', options.cycleStart
+    print 'cycleStop', options.cycleStop
+
 #Fixed High Gain , pixel matrix to 0xc trbit 1
 #Fixed Medium Gain pixel matrix to 0xc trbit 0
 #Fixed Low Gain pixel matrix to to 0x8 trbit don't care
@@ -517,31 +523,40 @@ def scan_offset(device, configtype):
     print 'xtc is', xtc
     epix = xtc.get(0)
     print 'Composing the sequence of configurations ...'
+    gcycle = 0   # cycle number if nothing skipped
+    cycle = 0    # cycle number excluding skipped
     for dark in range(numberOfDarks) :
-        for e in epix['elemCfg']:
-            mask = e['asicMask']
-            for rows in range(352) :
-                for cols in range(384) :
-                    e['asicPixelConfigArray'][rows][cols] = darkValues[dark]
-            for asicNum in range(4) :
-                if mask & (1 << asicNum) :
-                    e['asics'][asicNum]['trbit']=trBitValues[dark]
-        xtc.set(epix, dark)   
-    for trbit in [0, 1] :
-        for position in range(options.space**2) :
-            maskedpixels = pixel_mask(options.Value0, options.Value1, options.space, position)
+        if gcycle >= options.cycleStart and gcycle < options.cycleStop:
             for e in epix['elemCfg']:
                 mask = e['asicMask']
                 for rows in range(352) :
                     for cols in range(384) :
-                        e['asicPixelConfigArray'][rows][cols] = maskedpixels[rows][cols]
+                        e['asicPixelConfigArray'][rows][cols] = darkValues[dark]
                 for asicNum in range(4) :
                     if mask & (1 << asicNum) :
-                        e['asics'][asicNum]['atest']=1
-                        e['asics'][asicNum]['test']=1
-                        e['asics'][asicNum]['trbit']=trbit
-                        e['asics'][asicNum]['Pulser']=0
-            xtc.set(epix, numberOfDarks + position + (trbit*(options.space**2)))
+                        e['asics'][asicNum]['trbit']=trBitValues[dark]
+            xtc.set(epix, cycle)   
+            cycle += 1
+        gcycle += 1
+        
+    for trbit in [0, 1] :
+        for position in range(options.space**2) :
+            if gcycle >= options.cycleStart and gcycle < options.cycleStop:
+                maskedpixels = pixel_mask(options.Value0, options.Value1, options.space, position)
+                for e in epix['elemCfg']:
+                    mask = e['asicMask']
+                    for rows in range(352) :
+                        for cols in range(384) :
+                            e['asicPixelConfigArray'][rows][cols] = maskedpixels[rows][cols]
+                    for asicNum in range(4) :
+                        if mask & (1 << asicNum) :
+                            e['asics'][asicNum]['atest']=1
+                            e['asics'][asicNum]['test']=1
+                            e['asics'][asicNum]['trbit']=trbit
+                            e['asics'][asicNum]['Pulser']=0
+                xtc.set(epix, cycle)
+                cycle += 1
+            gcycle += 1
 #            print 'xtc.set(, epix', position + (trbit*(options.space**2)), ')'
     cdb.substitute(newkey,xtc)
     cdb.unlock()
@@ -562,16 +577,21 @@ def scan_offset(device, configtype):
     if options.userFlag > 0 :
         ready = raw_input('--Hit Enter when Ready-->')
 
+    gcycle = 0
     for dark in range(numberOfDarks) :
-        print 'dark', darkMessages[dark]
-        daq.begin(events=options.darkEvents)
-        daq.end() 
+        if gcycle >= options.cycleStart and gcycle < options.cycleStop:
+            print 'dark', darkMessages[dark]
+            daq.begin(events=options.darkEvents)
+            daq.end() 
+        gcycle += 1
        
     for trbit in [0, 1] :
         for position in range(((options.space**2))):
-            print 'position', position, 'trbit', trbit
-            daq.begin(events=options.events)
-            daq.end() 
+            if gcycle >= options.cycleStart and gcycle < options.cycleStop:
+                print 'position', position, 'trbit', trbit
+                daq.begin(events=options.events)
+                daq.end() 
+            gcycle += 1
         
 #
 #  Wait for the user to declare 'done'
