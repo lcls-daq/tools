@@ -527,14 +527,23 @@ def scan_offset(device, configtype):
     cycle = 0    # cycle number excluding skipped
     for dark in range(numberOfDarks) :
         if gcycle >= options.cycleStart and gcycle < options.cycleStop:
-            for e in epix['elemCfg']:
-                mask = e['asicMask']
+            if 'elemCfg' in epix:
+                for e in epix['elemCfg']:
+                    mask = e['asicMask']
+                    for rows in range(352) :
+                        for cols in range(384) :
+                            e['asicPixelConfigArray'][rows][cols] = darkValues[dark]
+                    for asicNum in range(4) :
+                        if mask & (1 << asicNum) :
+                            e['asics'][asicNum]['trbit']=trBitValues[dark]
+            else:
+                mask = epix['AsicMask']
                 for rows in range(352) :
                     for cols in range(384) :
-                        e['asicPixelConfigArray'][rows][cols] = darkValues[dark]
+                        epix['asicPixelConfigArray'][rows][cols] = darkValues[dark]
                 for asicNum in range(4) :
                     if mask & (1 << asicNum) :
-                        e['asics'][asicNum]['trbit']=trBitValues[dark]
+                        epix['asics'][asicNum]['trbit']=trBitValues[dark]
             xtc.set(epix, cycle)   
             cycle += 1
         gcycle += 1
@@ -543,17 +552,29 @@ def scan_offset(device, configtype):
         for position in range(options.space**2) :
             if gcycle >= options.cycleStart and gcycle < options.cycleStop:
                 maskedpixels = pixel_mask(options.Value0, options.Value1, options.space, position)
-                for e in epix['elemCfg']:
-                    mask = e['asicMask']
+                if 'elemCfg' in epix:
+                    for e in epix['elemCfg']:
+                        mask = e['asicMask']
+                        for rows in range(352) :
+                            for cols in range(384) :
+                                e['asicPixelConfigArray'][rows][cols] = maskedpixels[rows][cols]
+                        for asicNum in range(4) :
+                            if mask & (1 << asicNum) :
+                                e['asics'][asicNum]['atest']=1
+                                e['asics'][asicNum]['test']=1
+                                e['asics'][asicNum]['trbit']=trbit
+                                e['asics'][asicNum]['Pulser']=0
+                else:
+                    mask = epix['AsicMask']
                     for rows in range(352) :
                         for cols in range(384) :
-                            e['asicPixelConfigArray'][rows][cols] = maskedpixels[rows][cols]
+                            epix['asicPixelConfigArray'][rows][cols] = maskedpixels[rows][cols]
                     for asicNum in range(4) :
                         if mask & (1 << asicNum) :
-                            e['asics'][asicNum]['atest']=1
-                            e['asics'][asicNum]['test']=1
-                            e['asics'][asicNum]['trbit']=trbit
-                            e['asics'][asicNum]['Pulser']=0
+                            epix['asics'][asicNum]['atest']=1
+                            epix['asics'][asicNum]['test']=1
+                            epix['asics'][asicNum]['trbit']=trbit
+                            epix['asics'][asicNum]['Pulser']=0
                 xtc.set(epix, cycle)
                 cycle += 1
             gcycle += 1
