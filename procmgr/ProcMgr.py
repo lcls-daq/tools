@@ -41,7 +41,7 @@ def getConfigFileNames(argconfig, partition):
 # This function returns the current experiment ID from the
 # offline database based on the instrument (AMO, SXR, CXI:0, CXI:1, etc.)
 #
-# RETURNS:  Two values:  experiment number, experiment name
+# RETURNS:  One values: experiment name
 #
 
 def getCurrentExperiment(exp, cmd, station):
@@ -66,9 +66,7 @@ def getCurrentExperiment(exp, cmd, station):
         out = out.strip()
         try:
           exp_name = out.split()[1]
-          exp_id = int(out.split()[2])
         except:
-          exp_id = int(-1)
           exp_name = ''
           err = 'failed to parse \"%s\"' % out
 
@@ -76,10 +74,10 @@ def getCurrentExperiment(exp, cmd, station):
         print "Unable to get current experiment ID"
         if len(err) != 0:
           print "Error from '%s': %s" % (fullCommand, err)
-        exp_id = int(-1)
         exp_name = ''
 
-    return (exp_id, exp_name)
+    print("Current experiment is "+exp_name)
+    return exp_name
 
 #
 # getUser
@@ -265,14 +263,10 @@ def deduce_instrument(configfilename):
 # Caution:  If the string 'expname' or 'expnum' appears anywhere
 # else in the command, it will also be replaced
 #
-def parse_cmd(cmd, expnum, expname):
+def parse_cmd(cmd, expname):
     # if -E (experiment name) is passed in, replace 'expname' with current
     if cmd.find('-E') != -1 and cmd.find('expname') != -1:
         cmd = cmd.replace('expname',expname)
-
-    # if -e (experiment number) is passed in, replace 'expnum' with current
-    if cmd.find('-e') != -1 and cmd.find('expnum') != -1:
-        cmd = cmd.replace('expnum', str(expnum))
 
     # if -f (filename) and 'expname' are passed in, replace 'expname' with current
     if cmd.find('-f') != -1 and cmd.find('expname') != -1:
@@ -435,12 +429,12 @@ class ProcMgr:
         if self.INSTRUMENT not in self.valid_instruments:
             if self.INSTRUMENT != '':
               print 'ERR: Invalid instrument ', self.INSTRUMENT
-            (expnum, expname) = (-1, '')
+            expname = ''
         elif self.STATION < 0:
             print 'ERR: Invalid station ', self.STATION
-            (expnum, expname) = (-1, '')
+            expname = ''
         elif self.CURRENTEXPCMD != '':
-            (expnum, expname) = getCurrentExperiment(self.INSTRUMENT, self.CURRENTEXPCMD, self.STATION)
+            expname = getCurrentExperiment(self.INSTRUMENT, self.CURRENTEXPCMD, self.STATION)
 
         # set HOST and USER macros
         try:
@@ -546,7 +540,7 @@ class ProcMgr:
 
             if self.CURRENTEXPCMD != '':
               # Do something special if -E, -e, or -f appear in cmd string
-              self.cmd = parse_cmd(entry['cmd'], expnum, expname)
+              self.cmd = parse_cmd(entry['cmd'], expname)
             else:
               self.cmd = entry['cmd']
           else:
