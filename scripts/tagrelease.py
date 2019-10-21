@@ -15,8 +15,12 @@ parser.add_option("-n", "--dry-run",
 parser.add_option("-f", "--force",
                   action="store_true", dest="force", default=False,
                   help="skip sanity checks (use with caution!)")
+parser.add_option("-b", "--branch",
+                  dest="branch", default="master",
+                  help="branch to use for tagging")
 
 tag=None
+branch=None
 DAQURL='https://pswww.slac.stanford.edu/svn/pdsrepo'
 
 daq_subdirs = ['pds', 'pdsapp', 'timetool', 'tools']
@@ -63,9 +67,9 @@ def get_current_branch(project_path):
     return subprocess.Popen.communicate(p)[0]
 
 def compare_rev(project_path):
-    p = subprocess.Popen(['/usr/bin/git rev-parse master'], cwd = project_path, shell = True, stdout = subprocess.PIPE, close_fds = True)
+    p = subprocess.Popen(['/usr/bin/git rev-parse '+branch], cwd = project_path, shell = True, stdout = subprocess.PIPE, close_fds = True)
     loc = subprocess.Popen.communicate(p)[0]
-    p = subprocess.Popen(['/usr/bin/git rev-parse origin/master'], cwd = project_path, shell = True, stdout = subprocess.PIPE, close_fds = True)
+    p = subprocess.Popen(['/usr/bin/git rev-parse origin/'+branch], cwd = project_path, shell = True, stdout = subprocess.PIPE, close_fds = True)
     rem = subprocess.Popen.communicate(p)[0]
     return loc != rem
 
@@ -77,6 +81,7 @@ if __name__ == '__main__':
         parser.error("incorrect number of arguments")
     else:
         tag = args[0]
+        branch = options.branch
 
     if tag.find('ami') >= 0:
         dirlist = ami_subdirs + ['.']
@@ -110,10 +115,10 @@ if __name__ == '__main__':
                 print 'sanity check failed: tag \'%s\' already exists for directory \'%s\'' % (tag, dir)
                 fail = True
 
-        # sanity check 4: current directory is on branch master
+        # sanity check 4: current directory is on the requested branch
         cwdprop = get_current_branch(".")
-        if (not cwdprop) or (cwdprop.find('master') == -1):
-            print 'sanity check failed: working directory is not on the master branch' 
+        if (not cwdprop) or (cwdprop.find(branch) == -1):
+            print 'sanity check failed: working directory is not on the requested branch'
             fail = True
 
         # sanity check 5: current directory contains expected subdirectories
@@ -122,8 +127,8 @@ if __name__ == '__main__':
                 print 'sanity check failed: working directory does not include \'%s\' subdirectory' % dir
                 fail = True
             cwdprop = get_current_branch(dir)
-            if (not cwdprop) or (cwdprop.find('master') == -1):
-                print 'sanity check failed: working directory \'%s\' is not on the master branch' % dir
+            if (not cwdprop) or (cwdprop.find(branch) == -1):
+                print 'sanity check failed: working directory \'%s\' is not on the requested branch' % dir
                 fail = True
 
         if fail: 
