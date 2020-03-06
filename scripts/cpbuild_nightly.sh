@@ -54,11 +54,12 @@ cp -rf $DAQBOT $DAQREL
 rm -f $DAQREL/*rhel5*.tar.gz
 
 #  Copy rhel6 libraries and binaries
-#DAQBOT=$(ls -t -1 $BOT/pdsbuild-${RELTYP}-rhel6-*)
-#for i in ${DAQBOT[@]}; do DAQBOT="$i"; break; done
-#echo "Copying $DAQBOT to $DAQREL"
-#cp -rf $DAQBOT $DAQREL
-#/bin/tar -xzf $DAQREL/*rhel6*.tar.gz
+DAQBOT=$(ls -t -1 $BOT/pdsbuild-${RELTYP}-rhel6-*)
+for i in ${DAQBOT[@]}; do DAQBOT="$i"; break; done
+echo "Copying $DAQBOT to $DAQREL"
+cp -rf $DAQBOT $DAQREL
+/bin/tar -xzf $DAQREL/*rhel6*.tar.gz
+rm -f $DAQREL/*rhel6*.tar.gz
 
 #  Copy rhel7 libraries and binaries
 DAQBOT=$(ls -t -1 $BOT/pdsbuild-${RELTYP}-rhel7-*)
