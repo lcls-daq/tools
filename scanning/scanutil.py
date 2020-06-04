@@ -387,7 +387,7 @@ def scan_offset(device, configtype):
     parser = OptionParser()
     parser.add_option("-a","--address",dest="host",default='localhost',
                       help="connect to DAQ at HOST", metavar="HOST")
-    parser.add_option("-p","--platform",dest="platform",type="int",default=3,
+    parser.add_option("-p","--platform",dest="platform",type="int",default=0,
                       help="connect to DAQ at PLATFORM", metavar="PLATFORM")
     parser.add_option("-D","--detector",dest="detector",type="string",default='NoDetector',
                       help="detector to scan, default NoDetector",metavar="DET")
@@ -401,22 +401,22 @@ def scan_offset(device, configtype):
                       help="type ID Version in use, default 1",metavar="typeIdVersion")
     parser.add_option("-A","--dbalias",dest="dbalias",type="string",
                       help="data base key in use",metavar="DBALIAS")
-    parser.add_option("-s","--space",dest="space",type="int", default=4,
+    parser.add_option("-s","--space",dest="space",type="int", default=7,
                       help="space is the spacing in the array", metavar="SPACE")
-    parser.add_option("-e","--events",dest="events",type="int",default=3072,
+    parser.add_option("-e","--events",dest="events",type="int",default=4608,
                       help="record N events/cycle", metavar="EVENTS")
     parser.add_option("-v","--value0",dest="Value0",type="int",default=0,
-                      help="Value0 for most of the pixel array ", metavar="VALUE0")
+                      help="Value0 for most of the pixel array, default=0 ", metavar="VALUE0")
     parser.add_option("-V","--value1",dest="Value1",type="int",default=1,
-                      help="Value1 for pixels under test in the pixel array ", metavar="VALUE1")
+                      help="Value1 for pixels under test in the pixel array, default=1", metavar="VALUE1")
     parser.add_option("-d","--darkEvents",dest="darkEvents",type="int",default=1200,
                       help="Number of events in each Dark, default=1200 ", metavar="DARKEVENTS")
     parser.add_option("-u","--user",dest="userFlag",type="int",default=1,
-                      help="Iff zero then no user, default=1", metavar="DARKEVENTS")
+                      help="Iff zero then no user, default=1", metavar="USERFLAG")
     parser.add_option("-o","--cycleStart",dest="cycleStart",type="int",default=0,
                       help="Starting at cycle number, default=0", metavar="CYCLESTART")
-    parser.add_option("-O","--cycleStop",dest="cycleStop",type="int",default=0,
-                      help="Stopping at cycle number, default=100", metavar="CYCLESTOP")
+    parser.add_option("-O","--cycleStop",dest="cycleStop",type="int",default=105,
+                      help="Stopping at cycle number, default=105", metavar="CYCLESTOP")
 
     (options, args) = parser.parse_args()
     
