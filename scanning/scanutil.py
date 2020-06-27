@@ -454,7 +454,7 @@ def scan_offset(device, configtype):
         'Fixed Medium Gain',
         'Fixed Low Gain',
         'Auto High to Low',
-        'Auto Medium to low'
+        'Auto Medium to Low'
         ]
         
 
@@ -587,7 +587,10 @@ def scan_offset(device, configtype):
 #    in the file header
 #
 
-    daq.configure(key=newkey, events=options.events)
+    cycle_label = [
+        ('Epix10ka2M offset scan',''),
+    ]
+    daq.configure(key=newkey, events=options.events, labels=cycle_label)
 
     print "Configured."
 
@@ -602,7 +605,10 @@ def scan_offset(device, configtype):
     for dark in range(numberOfDarks) :
         if gcycle >= options.cycleStart and gcycle < options.cycleStop:
             print 'dark', darkMessages[dark]
-            daq.begin(events=options.darkEvents)
+            cycle_label = [
+                ('Epix10ka2M offset scan', 'dark %s' %  darkMessages[dark]),
+            ]
+            daq.begin(events=options.darkEvents, labels=cycle_label)
             daq.end() 
         gcycle += 1
        
@@ -610,7 +616,10 @@ def scan_offset(device, configtype):
         for position in range(((options.space**2))):
             if gcycle >= options.cycleStart and gcycle < options.cycleStop:
                 print 'position', position, 'trbit', trbit
-                daq.begin(events=options.events)
+                cycle_label = [
+                    ('Epix10ka2M offset scan', 'position %d trbit %d' % (position, trbit)),
+                ]
+                daq.begin(events=options.events, labels=cycle_label)
                 daq.end() 
             gcycle += 1
         
