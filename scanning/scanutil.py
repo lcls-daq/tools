@@ -564,6 +564,7 @@ def scan_offset(device, configtype):
                                 e['asics'][asicNum]['test']=1
                                 e['asics'][asicNum]['trbit']=trbit
                                 e['asics'][asicNum]['Pulser']=0
+                                e['asics'][asicNum]['PulserSync']=1
                 else:
                     mask = epix['AsicMask']
                     for rows in range(352) :
@@ -575,6 +576,12 @@ def scan_offset(device, configtype):
                             epix['asics'][asicNum]['test']=1
                             epix['asics'][asicNum]['trbit']=trbit
                             epix['asics'][asicNum]['Pulser']=0
+                            epix['asics'][asicNum]['PulserSync']=1
+                if 'quads' in epix:
+                    for q in epix['quads']:
+                        q['asicAcqLToPPmatL']=1000
+                else:
+                    epix['asicAcqLToPPmatL']=1000
                 xtc.set(epix, cycle)
                 cycle += 1
             gcycle += 1
