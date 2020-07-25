@@ -217,7 +217,11 @@ def control_log(path,summ,fields):
                 expstr = expstr[1].strip("'").replace("'","")
                 expname = expstr.split('(#')[0].replace("'","")
                 expnum = expstr.split(')')[0]
-                expnum = int(expnum.split('(#')[1].strip(')'))
+                # fix for dealing with fact expnum was removed
+                if expnum == expstr:
+                    expnum = 0
+                else:
+                    expnum = int(expnum.split('(#')[1].strip(')'))
             if (line.find("Configured")>=0 or line.find("Unmapped")>=0):
                 if run['dur']!='':
                     fruns.append(run)
