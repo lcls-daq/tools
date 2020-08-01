@@ -12,13 +12,13 @@ NEWTAG="${2}"
 DAQ_DIRS="pds pdsapp timetool tools"
 AMI_DIRS="ami tools"
 
-git log "${OLDTAG}".."${NEW_TAG}"
+git log "${OLDTAG}".."${NEWTAG}"
 for DIR in $DAQ_DIRS $AMI_DIRS
 do
   if [ -d "$DIR" ]; then
     OLD_DIR="$PWD"
     cd -- "$DIR"
-    git log "${OLDTAG}".."${NEW_TAG}"
+    git log "${OLDTAG}".."${NEWTAG}"
     cd -- "$OLD_DIR"
   fi
 done
