@@ -422,6 +422,8 @@ def scan_offset(device, configtype):
     
     options.device = device
     options.typeId = configtype
+    # currently only the Epix10kaQuads and Epix10ka2M support the ghost correction
+    options.ghostCorrect = True if device in ['Epix10kaQuad', 'Epix10ka2M'] else False
     
     print 'host', options.host
     print 'platform', options.platform
@@ -440,12 +442,14 @@ def scan_offset(device, configtype):
     print 'userFlag', options.userFlag
     print 'cycleStart', options.cycleStart
     print 'cycleStop', options.cycleStop
+    print 'ghostCorrection', options.ghostCorrect
 
 #Fixed High Gain , pixel matrix to 0xc trbit 1
 #Fixed Medium Gain pixel matrix to 0xc trbit 0
 #Fixed Low Gain pixel matrix to to 0x8 trbit don't care
 #Auto High to Low pixel matrix to 0x0 trbit 1
 #Auto Medium to low pixel matrix to 0x0 trbit 0
+    hasGhostCorrection = False
     numberOfDarks = 5
     darkValues = [0xc, 0xc, 0x8, 0, 0]
     trBitValues = [1, 0, 0, 1, 0]
@@ -564,7 +568,8 @@ def scan_offset(device, configtype):
                                 e['asics'][asicNum]['test']=1
                                 e['asics'][asicNum]['trbit']=trbit
                                 e['asics'][asicNum]['Pulser']=0
-                                e['asics'][asicNum]['PulserSync']=1
+                                if options.ghostCorrect:
+                                    e['asics'][asicNum]['PulserSync']=1
                 else:
                     mask = epix['AsicMask']
                     for rows in range(352) :
@@ -576,12 +581,14 @@ def scan_offset(device, configtype):
                             epix['asics'][asicNum]['test']=1
                             epix['asics'][asicNum]['trbit']=trbit
                             epix['asics'][asicNum]['Pulser']=0
-                            epix['asics'][asicNum]['PulserSync']=1
-                if 'quads' in epix:
-                    for q in epix['quads']:
-                        q['asicAcqLToPPmatL']=1000
-                else:
-                    epix['asicAcqLToPPmatL']=1000
+                            if options.ghostCorrect:
+                                epix['asics'][asicNum]['PulserSync']=1
+                if options.ghostCorrect:
+                    if 'quads' in epix:
+                        for q in epix['quads']:
+                            q['asicAcqLToPPmatL']=1000
+                    else:
+                        epix['asicAcqLToPPmatL']=1000
                 xtc.set(epix, cycle)
                 cycle += 1
             gcycle += 1
@@ -595,7 +602,7 @@ def scan_offset(device, configtype):
 #
 
     cycle_label = [
-        ('Epix10ka2M offset scan',''),
+        ('%s offset scan' % device,''),
     ]
     daq.configure(key=newkey, events=options.events, labels=cycle_label)
 
@@ -613,7 +620,7 @@ def scan_offset(device, configtype):
         if gcycle >= options.cycleStart and gcycle < options.cycleStop:
             print 'dark', darkMessages[dark]
             cycle_label = [
-                ('Epix10ka2M offset scan', 'dark %s' %  darkMessages[dark]),
+                ('%s offset scan' % device, 'dark %s' %  darkMessages[dark]),
             ]
             daq.begin(events=options.darkEvents, labels=cycle_label)
             daq.end() 
@@ -624,7 +631,7 @@ def scan_offset(device, configtype):
             if gcycle >= options.cycleStart and gcycle < options.cycleStop:
                 print 'position', position, 'trbit', trbit
                 cycle_label = [
-                    ('Epix10ka2M offset scan', 'position %d trbit %d' % (position, trbit)),
+                    ('%s offset scan' % device, 'position %d trbit %d' % (position, trbit)),
                 ]
                 daq.begin(events=options.events, labels=cycle_label)
                 daq.end() 
