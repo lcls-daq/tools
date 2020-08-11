@@ -178,6 +178,27 @@ def idFoundInList(id, substrings):
     return found
 
 #
+# deduce_procserv - deduce appropriate procserv process by guessing arch from cmd
+#
+# Returns: returns appropriate procserv, defaults to 32-bit to backwards compat.
+#
+def deduce_procserv(cmd=None):
+    default = "/reg/g/pcds/package/procServ-2.5.1.a/procServ"
+    multiarchbase = "/reg/g/pcds/pkg_mgr/release/procServ/2.8.0-1.0.0/%s/bin/procServ"
+    if cmd is None:
+      return default
+    elif "x86_64-rhel7" in cmd:
+      return multiarchbase % "rhel7-x86_64"
+    elif "x86_64-rhel6" in cmd:
+      return multiarchbase % "rhel6-x86_64"
+    elif "x86_64-linux" in cmd:
+      return multiarchbase % "linux-x86_64"
+    elif "i386-linux" in cmd:
+      return multiarchbase % "linux-x86"
+    else:
+      return default
+
+#
 # deduce_platform - deduce platform (-p) from contents of config file
 #
 # Returns: non-negative platform number, or -1 on error.
@@ -1103,8 +1124,9 @@ class ProcMgr:
                   name = key2uniqueid(key)
 
                 startcmd = \
-                        '/reg/g/pcds/package/procServ-2.5.1.a/procServ --noautorestart --name %s %s --allow --coresize %d %s %s %s' % \
-                       (name, \
+                        '%s --noautorestart --name %s %s --allow --coresize %d %s %s %s' % \
+                       (deduce_procserv(value[self.DICT_CMD]), \
+                        name, \
                         waitflag, \
                         coresize, \
                         value[self.DICT_CTRL], \
