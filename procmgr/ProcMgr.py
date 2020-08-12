@@ -184,7 +184,7 @@ def idFoundInList(id, substrings):
 #
 def deduce_procserv(cmd=None):
     default = "/reg/g/pcds/package/procServ-2.5.1.a/procServ"
-    multiarchbase = "/reg/g/pcds/pkg_mgr/release/procServ/2.8.0-1.0.0/%s/bin/procServ"
+    multiarchbase = "/reg/g/pcds/package/procServ-2.6.0-daq/%s/bin/procServ"
     if cmd is None:
       return default
     elif "x86_64-rhel7" in cmd:
