@@ -183,7 +183,7 @@ def idFoundInList(id, substrings):
 # Returns: returns appropriate procserv, defaults to 32-bit to backwards compat.
 #
 def deduce_procserv(cmd=None):
-    default = "/reg/g/pcds/package/procServ-2.5.1.a/procServ"
+    default = "/reg/g/pcds/package/procServ-2.6.0-SLAC/procServ"
     multiarchbase = "/reg/g/pcds/package/procServ-2.6.0-daq/%s/bin/procServ"
     if cmd is None:
       return default
@@ -1124,7 +1124,7 @@ class ProcMgr:
                   name = key2uniqueid(key)
 
                 startcmd = \
-                        '%s --noautorestart --name %s %s --allow --coresize %d %s %s %s' % \
+                        '%s --noautorestart --name %s %s --allow --coresize %d --logstamp="[%%d_%%T] " %s %s %s' % \
                        (deduce_procserv(value[self.DICT_CMD]), \
                         name, \
                         waitflag, \
