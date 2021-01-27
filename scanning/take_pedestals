@@ -18,6 +18,8 @@ SCRIPT="$(basename "${BASH_SOURCE[0]}.py")"
 DAQ_RELEASE="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/../.."; pwd -P)"
 # find the python version from the DAQ
 PY_DIR="$(cd "$(readlink -f "${DAQ_RELEASE}/build/python3/include")/../bin"; pwd -P)"
+# add the daq python modules to the path
+export PYTHONPATH="${DAQ_RELEASE}/build/pdsapp/lib/${DAQ_ARCH}"
 
 # run the script
 "${PY_DIR}/python3" "${DAQ_RELEASE}/tools/scanning/${SCRIPT}" $@
