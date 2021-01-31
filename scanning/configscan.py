@@ -81,6 +81,8 @@ class ConfigDB:
 
 
 class DetectorConfig(abc.ABC):
+    PV_LABEL_NAME_SIZE = 32
+    PV_LABEL_VALUE_SIZE = 64
     def __init__(self, devtype, name, src, spacing, values, typeid=None):
         self.devtype = devtype
         self.name = name
@@ -91,6 +93,9 @@ class DetectorConfig(abc.ABC):
         self.ncycles = 0
         self.xtc = None
         self.config = None
+        # maximum length allowed in pvlabels
+        self.scan_name_suffix = " scan"
+        self.scan_name_max = self.PV_LABEL_NAME_SIZE - len(self.scan_name_suffix)
 
     @abc.abstractmethod
     def cycle_name(self, cycle):
@@ -103,6 +108,18 @@ class DetectorConfig(abc.ABC):
     @abc.abstractmethod
     def max_dark(self):
         pass
+
+    @property
+    def scan_name(self):
+        if len(self.name) < self.scan_name_max:
+            return self.name + self.scan_name_suffix
+        else:
+            # try removing the XcsEndStation, MecTargetChamber, etc. part of the name
+            splitname = self.name.split('|')[-1]
+            if splitname and len(splitname) < self.scan_name_max:
+                return splitname + self.scan_name_suffix
+            else:
+                return self.name[:self.dispmax] + self.scan_name_suffix
 
     @property
     def max_cycle(self):
@@ -619,7 +636,7 @@ def scan_calibration(devtypes, options):
 
     try:
         # Configure the DAQ and add pvlabels with scan metadata
-        cycle_labels = [(f'{name} scan', '') for devs in devices.values() for name, _ in devs]
+        cycle_labels = [(configs[name].scan_name, '') for devs in devices.values() for name, _ in devs]
         logger.debug("Configuring with key=%x, events=%d, labels=%s, record=%s",
                      newkey, options.events, cycle_labels, options.record)
         if options.record is None:
@@ -643,9 +660,10 @@ def scan_calibration(devtypes, options):
                 logger.debug('  Number of events: %d', nevents[cycle])
                 for devs in devices.values():
                     for name, _ in devs:
+                        scan_name = configs[name].scan_name
                         cycle_name = configs[name].cycle_name(cycle)
-                        cycle_labels.append((f'{name} scan', f'{cycle_name}'))
-                        logger.info('  %s: %s', name, cycle_name)
+                        cycle_labels.append((scan_name, cycle_name))
+                        logger.info('  %s: %s', scan_name, cycle_name)
                 if not options.sim:
                     logger.debug('Starting calib cycle %d with events=%d, labels=%s',
                                  cycle, nevents[cycle], cycle_labels)
