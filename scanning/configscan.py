@@ -251,7 +251,7 @@ class EpixConfig(DetectorConfig):
 
     def cycle_name(self, cycle):
         if cycle < self.ndarks:
-            return self.dark_info[cycle][0]
+            return f'dark {self.dark_info[cycle][0]}'
         elif cycle < self.max_cycle:
             position, trbit = self._calib_values(cycle)
             return f'position {position} trbit {trbit}'
