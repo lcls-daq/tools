@@ -660,8 +660,8 @@ def scan_calibration(devtypes, options):
                 logger.debug('  Number of events: %d', nevents[cycle])
                 for devs in devices.values():
                     for name, _ in devs:
-                        scan_name = configs[name].scan_name
-                        cycle_name = configs[name].cycle_name(cycle)
+                        scan_name = str(configs[name].scan_name)
+                        cycle_name = str(configs[name].cycle_name(cycle))
                         cycle_labels.append((scan_name, cycle_name))
                         logger.info('  %s: %s', scan_name, cycle_name)
                 if not options.sim:
