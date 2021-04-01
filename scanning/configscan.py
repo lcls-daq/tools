@@ -81,9 +81,7 @@ class ConfigDB:
 
 
 class DetectorConfig(abc.ABC):
-    PV_LABEL_NAME_SIZE = 32
-    PV_LABEL_VALUE_SIZE = 64
-    def __init__(self, devtype, name, src, spacing, values, typeid=None):
+    def __init__(self, devtype, name, src, spacing, values, typeid=None, namesize=None):
         self.devtype = devtype
         self.name = name
         self.src = src
@@ -95,7 +93,10 @@ class DetectorConfig(abc.ABC):
         self.config = None
         # maximum length allowed in pvlabels
         self.scan_name_suffix = " scan"
-        self.scan_name_max = self.PV_LABEL_NAME_SIZE - len(self.scan_name_suffix)
+        if namesize is not None:
+            self.scan_name_max = namesize - len(self.scan_name_suffix) - 1
+        else:
+            self.scan_name_max = None
 
     @abc.abstractmethod
     def cycle_name(self, cycle):
@@ -111,7 +112,7 @@ class DetectorConfig(abc.ABC):
 
     @property
     def scan_name(self):
-        if len(self.name) < self.scan_name_max:
+        if self.scan_name_max is None or len(self.name) < self.scan_name_max:
             return self.name + self.scan_name_suffix
         else:
             # try removing the XcsEndStation, MecTargetChamber, etc. part of the name
@@ -119,7 +120,7 @@ class DetectorConfig(abc.ABC):
             if splitname and len(splitname) < self.scan_name_max:
                 return splitname + self.scan_name_suffix
             else:
-                return self.name[:self.dispmax] + self.scan_name_suffix
+                return self.name[:self.scan_name_max] + self.scan_name_suffix
 
     @property
     def max_cycle(self):
@@ -162,8 +163,8 @@ class DetectorConfig(abc.ABC):
 
 
 class SimpleConfig(DetectorConfig):
-    def __init__(self, devtype, name, src, spacing, values, typeid=None):
-        super().__init__(devtype, name, src, spacing, values, typeid)
+    def __init__(self, devtype, name, src, spacing, values, typeid=None, namesize=None):
+        super().__init__(devtype, name, src, spacing, values, typeid, namesize)
         self.ndarks = 1
 
     def cycle_name(self, cycle):
@@ -183,8 +184,8 @@ class SimpleConfig(DetectorConfig):
 
 
 class JungfrauConfig(DetectorConfig):
-    def __init__(self, devtype, name, src, spacing, values, typeid=None):
-        super().__init__(devtype, name, src, spacing, values, typeid)
+    def __init__(self, devtype, name, src, spacing, values, typeid=None, namesize=None):
+        super().__init__(devtype, name, src, spacing, values, typeid, namesize)
         self.dark_info = [
             ('Normal', 0),
             ('ForcedGain1', 3),
@@ -212,8 +213,8 @@ class JungfrauConfig(DetectorConfig):
 
 
 class EpixConfig(DetectorConfig):
-    def __init__(self, devtype, name, src, spacing, values, typeid=None):
-        super().__init__(devtype, name, src, spacing, values, typeid)
+    def __init__(self, devtype, name, src, spacing, values, typeid=None, namesize=None):
+        super().__init__(devtype, name, src, spacing, values, typeid, namesize)
         self.dark_info = [
             ('Fixed High Gain', 0xc, 1),
             ('Fixed Medium Gain', 0xc, 0),
@@ -580,6 +581,8 @@ def scan_calibration(devtypes, options):
     logger.debug('Current DAQ partition: %s', info.partition)
     devices = info.find_devices(devtypes)
     logger.info('Selected the following detectors to scan in the partition:')
+    max_label_size = daq.sizes().get('LabelNameSize')
+    logger.debug('Maximum allowed length of label names: %d', max_label_size)
     for devtype, devs in sorted(devices.items()):
         logger.info('  %s:', devtype)
         for name, src  in devs:
@@ -593,7 +596,8 @@ def scan_calibration(devtypes, options):
                     name,
                     src,
                     options.space,
-                    (options.Value0, options.Value1)
+                    (options.Value0, options.Value1),
+                    namesize=max_label_size
                 )
                 # check which detector has the highest max_cycles/max_dark
                 if options.fullCalib:
