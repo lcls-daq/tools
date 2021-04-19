@@ -338,14 +338,42 @@ class EpixConfig(DetectorConfig):
             return False
 
 
-DEVICE_CONFIG_HANDLERS = {
-    'Opal1000': SimpleConfig,
-    'Jungfrau': JungfrauConfig,
-    'Epix100a': SimpleConfig,
-    'Epix10ka': EpixConfig,
-    'Epix10kaQuad': EpixConfig,
-    'Epix10ka2M': EpixConfig,
-}
+def _get_device_config_handlers():
+    special_handlers = {
+        'Jungfrau': JungfrauConfig,
+        'Epix10ka': EpixConfig,
+        'Epix10kaQuad': EpixConfig,
+        'Epix10ka2M': EpixConfig,
+    }
+    excluded_handlers = {
+        'NoDevice',
+        'Evr',
+        'Acqiris',
+        'Ipimb',
+        'Encoder',
+        'AcqTDC',
+        'Xamps',
+        'Fexamp',
+        'Gsc16ai',
+        'OceanOptics',
+        'USDUSB',
+        'Imp',
+        'Epix',
+        'EpixSampler',
+        'Wave8',
+        'LeCroy',
+        'JungfrauSegment',
+        'JungfrauSegmentM2',
+        'JungfrauSegmentM3',
+        'JungfrauSegmentM4',
+        'QuadAdc',
+    }
+    daq = pydaq.Control(0)
+
+    return {dev: special_handlers.get(dev, SimpleConfig) for dev in daq.devices() if dev not in excluded_handlers}
+
+
+DEVICE_CONFIG_HANDLERS = _get_device_config_handlers()
 
 
 class PartitionInfo:
@@ -584,7 +612,9 @@ def scan_calibration(devtypes, options):
     max_label_size = daq.sizes().get('LabelNameSize')
     logger.debug('Maximum allowed length of label names: %d', max_label_size)
     for devtype, devs in sorted(devices.items()):
-        logger.info('  %s:', devtype)
+        # only print devtype if there are devices of that type
+        if devs:
+            logger.info('  %s:', devtype)
         for name, src  in devs:
             logger.info('    %s', name)
             if devtype in DEVICE_CONFIG_HANDLERS:
