@@ -12,8 +12,8 @@ def get_db_from_daq(daqinfo):
         platform = 0
     daq = pydaq.Control(host, platform)
     daq.connect()
-    dbalias = daq.dbalias
-    dbpath = daq.dpath
+    dbalias = daq.dbalias()
+    dbpath = daq.dbpath()
     daq.disconnect()
     return dbpath, dbalias
 
