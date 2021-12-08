@@ -15,8 +15,8 @@ class SimXtc:
         self.xtcs = {}
 
     def get(self, cycle):
-        if PartitionInfo.get_dev(self.src) in [48, 50]:
-            # Epix10ka2M and Epix10kaQuad
+        if PartitionInfo.get_dev(self.src) == 48:
+            # Epix10ka2M
             cfg = {
                 'elemCfg': [{
                     'asicMask': 0xf,
@@ -28,6 +28,18 @@ class SimXtc:
                 }],
             }
             return self.xtcs.get(cycle, cfg)
+        elif PartitionInfo.get_dev(self.src) == 50:
+            # Epix10kaQuad
+            cfg = {
+                'elemCfg': [{
+                    'asicMask': 0xf,
+                    'asicPixelConfigArray': [[0]*384] * 352,
+                    'asics': [{'atest': 0, 'test': 0, 'trbit': 0, 'Pulser': 0, 'PulserSync': 0}] * 4,
+                }],
+                'quad': {
+                    'asicAcqLToPPmatL': 0,
+                },
+            }
         elif PartitionInfo.get_dev(self.src) == 45:
             # Epix10ka
             cfg = {
@@ -323,6 +335,8 @@ class EpixConfig(DetectorConfig):
             if 'quads' in self.config:
                 for q in self.config['quads']:
                     q['asicAcqLToPPmatL']=self.asicAcqLToPPmatL
+            elif 'quad' in self.config:
+                self.config['quad']['asicAcqLToPPmatL']=self.asicAcqLToPPmatL
             else:
                 self.config['asicAcqLToPPmatL']=self.asicAcqLToPPmatL
 
