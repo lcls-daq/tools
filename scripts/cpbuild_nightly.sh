@@ -21,6 +21,9 @@ fi
 # exit immediately if a command exits with a non-zero status
 set -e
 
+# make sure the umask normal
+umask 022
+
 if [[ $1 == "ami-"* ]]; then
     RELTYP="ami"
 else
