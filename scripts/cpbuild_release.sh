@@ -37,28 +37,34 @@ cd $DAQREL
 
 
 #  Copy rhel5 libraries and binaries
-DAQBOT=$(ls -t -1 $BOT/pdsbuild-${RELTYP}-rhel5-*-${1}*)
+DAQBOT=$(ls -t -1 $BOT/pdsbuild-${RELTYP}-rhel5-*-${1}* || echo)
 for i in ${DAQBOT[@]}; do DAQBOT="$i"; break; done
-echo "Copying $DAQBOT to $DAQREL"
-cp -rf $DAQBOT $DAQREL
-/bin/tar -xzf $DAQREL/*rhel5*.tar.gz
-rm -f $DAQREL/*rhel5*.tar.gz
+if [ ! -z $DAQBOT ]; then
+    echo "Copying $DAQBOT to $DAQREL"
+    cp -rf $DAQBOT $DAQREL
+    /bin/tar -xzf $DAQREL/*rhel5*.tar.gz
+    rm -f $DAQREL/*rhel5*.tar.gz
+fi
 
 #  Copy rhel6 libraries and binaries
-DAQBOT=$(ls -t -1 $BOT/pdsbuild-${RELTYP}-rhel6-*-${1}*)
+DAQBOT=$(ls -t -1 $BOT/pdsbuild-${RELTYP}-rhel6-*-${1}* || echo)
 for i in ${DAQBOT[@]}; do DAQBOT="$i"; break; done
-echo "Copying $DAQBOT to $DAQREL"
-cp -rf $DAQBOT $DAQREL
-/bin/tar -xzf $DAQREL/*rhel6*.tar.gz
-rm -f $DAQREL/*rhel6*.tar.gz
+if [ ! -z $DAQBOT ]; then
+    echo "Copying $DAQBOT to $DAQREL"
+    cp -rf $DAQBOT $DAQREL
+    /bin/tar -xzf $DAQREL/*rhel6*.tar.gz
+    rm -f $DAQREL/*rhel6*.tar.gz
+fi
 
 #  Copy rhel7 libraries and binaries
-DAQBOT=$(ls -t -1 $BOT/pdsbuild-${RELTYP}-rhel7-*-${1}*)
+DAQBOT=$(ls -t -1 $BOT/pdsbuild-${RELTYP}-rhel7-*-${1}* || echo)
 for i in ${DAQBOT[@]}; do DAQBOT="$i"; break; done
-echo "Copying $DAQBOT to $DAQREL"
-cp -rf $DAQBOT $DAQREL
-/bin/tar -xzf $DAQREL/*rhel7*.tar.gz
-rm -f $DAQREL/*rhel7*.tar.gz
+if [ ! -z $DAQBOT ]; then
+    echo "Copying $DAQBOT to $DAQREL"
+    cp -rf $DAQBOT $DAQREL
+    /bin/tar -xzf $DAQREL/*rhel7*.tar.gz
+    rm -f $DAQREL/*rhel7*.tar.gz
+fi
 
 # Create soft link in DAQREL directory
 cd /reg/g/pcds/dist/pds

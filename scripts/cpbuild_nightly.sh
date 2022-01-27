@@ -46,28 +46,34 @@ cd $DAQREL
 
 
 #  Copy rhel5 libraries and binaries
-DAQBOT=$(ls -t -1 $BOT/pdsbuild-${RELTYP}-rhel5-*)
+DAQBOT=$(ls -t -1 $BOT/pdsbuild-${RELTYP}-rhel5-* || echo)
 for i in ${DAQBOT[@]}; do DAQBOT="$i"; break; done
-echo "Copying $DAQBOT to $DAQREL"
-cp -rf $DAQBOT $DAQREL
-/bin/tar -xzf $DAQREL/*rhel5*.tar.gz
-rm -f $DAQREL/*rhel5*.tar.gz
+if [ ! -z $DAQBOT ]; then
+    echo "Copying $DAQBOT to $DAQREL"
+    cp -rf $DAQBOT $DAQREL
+    /bin/tar -xzf $DAQREL/*rhel5*.tar.gz
+    rm -f $DAQREL/*rhel5*.tar.gz
+fi
 
 #  Copy rhel6 libraries and binaries
-DAQBOT=$(ls -t -1 $BOT/pdsbuild-${RELTYP}-rhel6-*)
+DAQBOT=$(ls -t -1 $BOT/pdsbuild-${RELTYP}-rhel6-* || echo)
 for i in ${DAQBOT[@]}; do DAQBOT="$i"; break; done
-echo "Copying $DAQBOT to $DAQREL"
-cp -rf $DAQBOT $DAQREL
-/bin/tar -xzf $DAQREL/*rhel6*.tar.gz
-rm -f $DAQREL/*rhel6*.tar.gz
+if [ ! -z $DAQBOT ]; then
+    echo "Copying $DAQBOT to $DAQREL"
+    cp -rf $DAQBOT $DAQREL
+    /bin/tar -xzf $DAQREL/*rhel6*.tar.gz
+    rm -f $DAQREL/*rhel6*.tar.gz
+fi
 
 #  Copy rhel7 libraries and binaries
-DAQBOT=$(ls -t -1 $BOT/pdsbuild-${RELTYP}-rhel7-*)
+DAQBOT=$(ls -t -1 $BOT/pdsbuild-${RELTYP}-rhel7-* || echo)
 for i in ${DAQBOT[@]}; do DAQBOT="$i"; break; done
-echo "Copying $DAQBOT to $DAQREL"
-cp -rf $DAQBOT $DAQREL
-/bin/tar -xzf $DAQREL/*rhel7*.tar.gz
-rm -f $DAQREL/*rhel7*.tar.gz
+if [ ! -z $DAQBOT ]; then
+    echo "Copying $DAQBOT to $DAQREL"
+    cp -rf $DAQBOT $DAQREL
+    /bin/tar -xzf $DAQREL/*rhel7*.tar.gz
+    rm -f $DAQREL/*rhel7*.tar.gz
+fi
 
 find $BOT -mindepth 1 -type f -name '*.tar.gz' -mtime +10 -delete
 
