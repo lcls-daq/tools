@@ -294,6 +294,14 @@ def parse_cmd(cmd, expname):
         fname = cmd.split('-f')[1].strip()
         newfname = fname.replace('expname', expname)
         cmd = cmd.replace(fname, newfname)
+
+    # if calibdir=<path> are passed in, replace 'expname' with current
+    match = re.search('calibdir\s*=\s*(?P<fname>\S+)', cmd)
+    if match:
+        fname = match.group('fname')
+        newfname = fname.replace('expname', expname)
+        cmd = cmd.replace(fname, newfname)
+
     return cmd
 
 #
