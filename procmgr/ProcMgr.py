@@ -195,6 +195,9 @@ def deduce_procserv(cmd=None):
       return multiarchbase % "linux-x86_64"
     elif "i386-linux" in cmd:
       return multiarchbase % "linux-x86"
+    elif "condadir" in cmd:
+      # backported lcls2 python apps
+      return multiarchbase % "rhel7-x86_64"
     else:
       return default
 
