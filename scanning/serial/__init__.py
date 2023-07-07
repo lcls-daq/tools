@@ -10,16 +10,16 @@ VERSION = '2.4'
 import sys
 
 if sys.platform == 'cli':
-    from serialcli import *
+    from .serialcli import *
 else:
     import os
     #chose an implementation, depending on os
     if os.name == 'nt': #sys.platform == 'win32':
-        from serialwin32 import *
+        from .serialwin32 import *
     elif os.name == 'posix':
-        from serialposix import *
+        from .serialposix import *
     elif os.name == 'java':
-        from serialjava import *
+        from .serialjava import *
     else:
         raise Exception("Sorry: no implementation for your platform ('%s') available" % os.name)
 

@@ -11,7 +11,7 @@
 # references: http://www.easysw.com/~mike/serial/serial.html
 
 import sys, os, fcntl, termios, struct, select, errno
-from serialutil import *
+from .serialutil import *
 
 #Do check the Python version as some constants have moved.
 if (sys.hexversion < 0x020100f0):
@@ -68,7 +68,7 @@ elif plat[:3] == 'aix':      #aix
 
 else:
     #platform detection has failed...
-    print """don't know how to number ttys on this system.
+    print("""don't know how to number ttys on this system.
 ! Use an explicit path (eg /dev/ttyS1) or send this information to
 ! the author of this module:
 
@@ -80,7 +80,7 @@ also add the device name of the serial port and where the
 counting starts for the first serial port.
 e.g. 'first serial port: /dev/ttyS0'
 and with a bit luck you can get this module running...
-""" % (sys.platform, os.name, VERSION)
+""" % (sys.platform, os.name, VERSION))
     #no exception, just continue with a brave attempt to build a device name
     #even if the device name is not correct for the platform it has chances
     #to work using a string with the real device name as port paramter.
@@ -126,37 +126,37 @@ ASYNC_SPD_MASK = 0x1030
 ASYNC_SPD_CUST = 0x0030
 
 baudrate_constants = {
-    0:       0000000,  # hang up
-    50:      0000001,
-    75:      0000002,
-    110:     0000003,
-    134:     0000004,
-    150:     0000005,
-    200:     0000006,
-    300:     0000007,
-    600:     0000010,
-    1200:    0000011,
-    1800:    0000012,
-    2400:    0000013,
-    4800:    0000014,
-    9600:    0000015,
-    19200:   0000016,
-    38400:   0000017,
-    57600:   0010001,
-    115200:  0010002,
-    230400:  0010003,
-    460800:  0010004,
-    500000:  0010005,
-    576000:  0010006,
-    921600:  0010007,
-    1000000: 0010010,
-    1152000: 0010011,
-    1500000: 0010012,
-    2000000: 0010013,
-    2500000: 0010014,
-    3000000: 0010015,
-    3500000: 0010016,
-    4000000: 0010017
+    0:       0o0000000,  # hang up
+    50:      0o0000001,
+    75:      0o0000002,
+    110:     0o0000003,
+    134:     0o0000004,
+    150:     0o0000005,
+    200:     0o0000006,
+    300:     0o0000007,
+    600:     0o0000010,
+    1200:    0o0000011,
+    1800:    0o0000012,
+    2400:    0o0000013,
+    4800:    0o0000014,
+    9600:    0o0000015,
+    19200:   0o0000016,
+    38400:   0o0000017,
+    57600:   0o0010001,
+    115200:  0o0010002,
+    230400:  0o0010003,
+    460800:  0o0010004,
+    500000:  0o0010005,
+    576000:  0o0010006,
+    921600:  0o0010007,
+    1000000: 0o0010010,
+    1152000: 0o0010011,
+    1500000: 0o0010012,
+    2000000: 0o0010013,
+    2500000: 0o0010014,
+    3000000: 0o0010015,
+    3500000: 0o0010016,
+    4000000: 0o0010017
 }
     
 
@@ -174,7 +174,7 @@ class Serial(SerialBase):
         #open
         try:
             self.fd = os.open(self.portstr, os.O_RDWR|os.O_NOCTTY|os.O_NONBLOCK)
-        except Exception, msg:
+        except Exception as msg:
             self.fd = None
             raise SerialException("could not open port %s: %s" % (self._port, msg))
         #~ fcntl.fcntl(self.fd, FCNTL.F_SETFL, 0)  #set blocking
@@ -201,7 +201,7 @@ class Serial(SerialBase):
             vtime = int(self._interCharTimeout * 10)
         try:
             iflag, oflag, cflag, lflag, ispeed, ospeed, cc = termios.tcgetattr(self.fd)
-        except termios.error, msg:      #if a port is nonexistent but has a /dev file, it'll fail here
+        except termios.error as msg:      #if a port is nonexistent but has a /dev file, it'll fail here
             raise SerialException("Could not configure port: %s" % msg)
         #set up raw mode / no echo / binary
         cflag |=  (TERMIOS.CLOCAL|TERMIOS.CREAD)
@@ -346,7 +346,7 @@ class Serial(SerialBase):
         inp = None
         if size > 0:
             while len(read) < size:
-                #print "\tread(): size",size, "have", len(read)    #debug
+                #print("\tread(): size",size, "have", len(read))    #debug
                 ready,_,_ = select.select([self.fd],[],[], self._timeout)
                 if not ready:
                     break   #timeout
@@ -376,7 +376,7 @@ class Serial(SerialBase):
                         raise writeTimeoutError
                 d = d[n:]
                 t = t - n
-            except OSError,v:
+            except OSError as v:
                 if v.errno != errno.EAGAIN:
                     raise
 
@@ -486,7 +486,7 @@ if __name__ == '__main__':
     s.flushInput()
     s.flushOutput()
     s.write('hello')
-    print repr(s.read(5))
-    print s.inWaiting()
+    print(repr(s.read(5)))
+    print(s.inWaiting())
     del s
 
