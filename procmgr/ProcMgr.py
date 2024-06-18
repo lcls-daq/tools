@@ -183,10 +183,12 @@ def idFoundInList(id, substrings):
 # Returns: returns appropriate procserv, defaults to 32-bit to backwards compat.
 #
 def deduce_procserv(cmd=None):
-    default = "/reg/g/pcds/package/procServ-2.6.0-daq/linux-x86/bin/procServ"
-    multiarchbase = "/reg/g/pcds/package/procServ-2.6.0-daq/%s/bin/procServ"
+    default = "/cds/group/pcds/package/procServ-2.6.0-daq/linux-x86/bin/procServ"
+    multiarchbase = "/cds/group/pcds/package/procServ-2.6.0-daq/%s/bin/procServ"
     if cmd is None:
       return default
+    elif "x86_64-rhel9" in cmd:
+      return multiarchbase % "rhel9-x86_64"
     elif "x86_64-rhel7" in cmd:
       return multiarchbase % "rhel7-x86_64"
     elif "x86_64-rhel6" in cmd:
