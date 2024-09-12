@@ -1,13 +1,14 @@
 #!/bin/bash
 
 # guess the arch to use for the daq
-source /cds/group/pcds/setup/lsb_family.sh
-if [ "$kernel_family" == "rhel7" ]; then
-    DAQ_ARCH=x86_64-rhel7-opt
-elif [ "$kernel_family" == "rhel6" ]; then
+if [[ `uname -r` == *el5* ]]; then
+    DAQ_ARCH='x86_64-linux-opt'
+elif [[ `uname -r` == *el6* ]]; then
     DAQ_ARCH=x86_64-rhel6-opt
-elif [ "$kernel_family" == "rhel5" ]; then
-    DAQ_ARCH=x86_64-linux-opt
+elif [[ `uname -r` == *el7* ]]; then
+    DAQ_ARCH=x86_64-rhel7-opt
+elif [[ `uname -r` == *el9* ]]; then
+    DAQ_ARCH=x86_64-rhel9-opt
 else
     DAQ_ARCH=x86_64-linux-opt
 fi

@@ -31,6 +31,9 @@ elif [[ `uname -r` == *el6* ]]; then
 elif [[ `uname -r` == *el7* ]]; then
   x86_64_arch='x86_64-rhel7'
   BUILD32=false
+elif [[ `uname -r` == *el9* ]]; then
+  x86_64_arch='x86_64-rhel9'
+  BUILD32=false
 fi
 
 if [[ "$CLEAN" == true ]] ; then

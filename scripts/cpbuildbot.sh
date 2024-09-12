@@ -54,6 +54,13 @@ echo "Copying $DAQBOT to $DAQREL"
 cp -rf $DAQBOT $DAQREL
 /bin/tar -xzf $DAQREL/*rhel7*.tar.gz
 
+#  Copy rhel9 libraries and binaries
+DAQBOT=$(ls -t -1 $BOT/pdsbuild-${RELTYP}-rhel9-*)
+for i in ${DAQBOT[@]}; do DAQBOT="$i"; break; done
+echo "Copying $DAQBOT to $DAQREL"
+cp -rf $DAQBOT $DAQREL
+/bin/tar -xzf $DAQREL/*rhel9*.tar.gz
+
 # Create soft link in DAQREL directory
 cd /reg/g/pcds/dist/pds
 if [ -e /reg/g/pcds/dist/pds/${CURRENT} ]; then

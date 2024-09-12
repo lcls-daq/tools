@@ -78,6 +78,16 @@ if [ ! -z $DAQBOT ]; then
     rm -f $DAQREL/*rhel7*.tar.gz
 fi
 
+#  Copy rhel9 libraries and binaries
+DAQBOT=$(ls -t -1 $BOT/pdsbuild-${RELTYP}-rhel9-* || echo)
+for i in ${DAQBOT[@]}; do DAQBOT="$i"; break; done
+if [ ! -z $DAQBOT ]; then
+    echo "Copying $DAQBOT to $DAQREL"
+    cp -rf $DAQBOT $DAQREL
+    /bin/tar -xzf $DAQREL/*rhel9*.tar.gz
+    rm -f $DAQREL/*rhel9*.tar.gz
+fi
+
 find $BOT -mindepth 1 -type f -name '*.tar.gz' -mtime +10 -delete
 
 cd $CWD
