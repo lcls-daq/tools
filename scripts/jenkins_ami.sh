@@ -12,10 +12,10 @@ buildtype="unknown"
 for label in $NODE_LABELS
 do
     if [ "$label" == "rocky9" ]; then
-        tools/scripts/build.sh --clean --fail --no32
+        tools/scripts/build_ami.sh --clean --fail
         buildtype="rhel9"
     elif [ "$label" == "rhel9" ]; then
-        tools/scripts/build.sh --clean --fail --no32
+        tools/scripts/build_ami.sh --clean --fail
         buildtype="$label"
     elif [ "$label" == "rhel7" ]; then
         tools/scripts/build_ami.sh --clean --fail
