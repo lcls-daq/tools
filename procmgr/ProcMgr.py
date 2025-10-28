@@ -2,13 +2,23 @@
 # ProcMgr.py - configure (start, stop, status) the DAQ processes
 # $Id$
 
-import os, sys, string, telnetlib, subprocess
+from __future__ import print_function
+import os, sys, telnetlib, subprocess
 import stat, errno, time
 import re
 from time import sleep, strftime
 import socket
-import StringIO
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import StringIO
 from platform import node
+if sys.version_info >= (3, 0):
+    iteritems = dict.items
+    iterkeys = dict.keys
+else:
+    iteritems = dict.iteritems
+    iterkeys = dict.iterkeys
 
 uniqueid_maxlen = 30;
 
@@ -66,14 +76,17 @@ def getCurrentExperiment(exp, cmd, station):
         out = out.strip()
         try:
           exp_name = out.split()[1]
+          # this is for python3
+          if not isinstance(exp_name, str):
+              exp_name = exp_name.decode('ascii')
         except:
           exp_name = ''
           err = 'failed to parse \"%s\"' % out
 
       if returnCode != 0:
-        print "Unable to get current experiment ID"
+        print("Unable to get current experiment ID")
         if len(err) != 0:
-          print "Error from '%s': %s" % (fullCommand, err)
+          print("Error from '%s': %s" % (fullCommand, err))
         exp_name = ''
 
     print("Current experiment is "+exp_name)
@@ -94,11 +107,13 @@ def getUser():
                          close_fds = True)
     out, err = subprocess.Popen.communicate(p)
     if (p.returncode):
-      print "Unable to get user name"
+      print("Unable to get user name")
       if len(err) != 0:
-        print "Error from '%s': %s" % ('/usr/bin/id -un', err)
+        print("Error from '%s': %s" % ('/usr/bin/id -un', err))
     elif len(err) == 0 and len(out) != 0:
       username = out.strip()
+      if not isinstance(username, str):
+          username = username.decode('ascii')
     return username, node()
 
 #
@@ -121,7 +136,7 @@ def name2uniqueid(name):
 # progressMessage
 #
 def progressMessage(msg):
-    print '%-60s ...' % msg,
+    print('%-60s ...' % msg)
     sys.stdout.flush()
     return
 
@@ -156,7 +171,7 @@ def mkdir_p(path):
     rv = 1
     try:
         os.makedirs(path)
-    except OSError, exc:
+    except OSError as exc:
         if exc.errno == errno.EEXIST:
             pass
         else: raise
@@ -176,6 +191,34 @@ def idFoundInList(id, substrings):
         found = True
         break
     return found
+
+#
+# execcnf - wrapper execing the cnf file that works in python 2 and 3
+#
+def execcnf(filename, glbs, locs):
+    if sys.version_info[0] < 3:
+      execfile(filename, glbs, locs)
+    else:
+      exec(open(filename).read(), glbs, locs)
+#
+# tn_read_until - wrapper for telnet read_until for dealing with python3
+#
+# Returns: the repsonse fromt the telnet read
+#
+def tn_read_until(tn, expected, timeout):
+    if sys.version_info[0] < 3:
+      return tn.read_until(expected, timeout)
+    else:
+      return tn.read_until(expected.encode('ascii'), timeout).decode('ascii')
+
+#
+# tn_write - wrapper for telnet write for dealing with python3
+#
+def tn_write(tn, msg):
+    if sys.version_info[0] < 3:
+      tn.write(msg)
+    else:
+      tn.write(msg.encode('ascii'))
 
 #
 # deduce_procserv - deduce appropriate procserv process by guessing arch from cmd
@@ -214,11 +257,11 @@ def deduce_platform(configfilename):
           'id':'id', 'cmd':'cmd', 'flags':'flags', 'port':'port', 'host':'host',
           'rtprio':'rtprio', 'env':'env', 'evr':'evr', 'procmgr_macro': {}}
     try:
-      execfile(configfilename, {}, cc)
+      execcnf(configfilename, {}, cc)
       if type(cc['platform']) == type('') and cc['platform'].isdigit():
         rv = int(cc['platform'])
     except:
-      print 'deduce_platform Error:', sys.exc_info()[1]
+      print('deduce_platform Error:', sys.exc_info()[1])
 
     return rv
 
@@ -234,12 +277,12 @@ def deduce_platform2(configfilename):
           'id':'id', 'cmd':'cmd', 'flags':'flags', 'port':'port', 'host':'host',
           'rtprio':'rtprio', 'env':'env', 'evr':'evr', 'procmgr_macro': {}}
     try:
-      execfile(configfilename, {}, cc)
+      execcnf(configfilename, {}, cc)
       macro_rv = cc['procmgr_macro']
       if type(cc['platform']) == type('') and cc['platform'].isdigit():
         platform_rv = int(cc['platform'])
     except:
-      print 'deduce_platform2 Error:', sys.exc_info()[1]
+      print('deduce_platform2 Error:', sys.exc_info()[1])
 
     return platform_rv, macro_rv
 
@@ -263,7 +306,7 @@ def deduce_instrument(configfilename):
           'rtprio':'rtprio', 'env':'env', 'evr':'evr', 'procmgr_macro': {}, 'currentexpcmd': None}
 
     try:
-      execfile(configfilename, {}, cc)
+      execcnf(configfilename, {}, cc)
       if cc['instrument'] != None:
         tmplist = cc['instrument'].split(":")
         instr_name = tmplist[0].upper()
@@ -272,7 +315,7 @@ def deduce_instrument(configfilename):
         if cc['currentexpcmd'] != None:
           currentexpcmd = cc['currentexpcmd']
     except:
-      print 'deduce_instrument Error:', sys.exc_info()[1]        
+      print('deduce_instrument Error:', sys.exc_info()[1])
       instr_name = ''
       currentexpcmd = ''
       station_number = 0
@@ -322,28 +365,28 @@ def add_macro_config(procmgr_macro, oldfilename, newfilename):
     oldfilecontents = oldfile.read()
     oldfile.close()
   except IOError:
-    print '%s: i/o error occurred while reading from \'%s\'' % (sys.argv[0], oldfilename)
+    print('%s: i/o error occurred while reading from \'%s\'' % (sys.argv[0], oldfilename))
   except:
-    print '%s: error occurred while reading from \'%s\': %r' % (sys.argv[0], oldfilename, sys.exc_info()[1])
+    print('%s: error occurred while reading from \'%s\': %r' % (sys.argv[0], oldfilename, sys.exc_info()[1]))
   else:
   #
   # create temporary file (in memory)
   #
     try:
-      tmpfile = StringIO.StringIO()
+      tmpfile = StringIO()
       tmpfile.write('# --- automatically generated file - DO NOT EDIT -----------------------------\n')
       tmpfile.write('# COMMAND:')
       for aa in sys.argv:
         tmpfile.write(' %s' % aa)
       tmpfile.write('\n# DATE: %s\n' % strftime('%c'))
-      for key in sorted(procmgr_macro.iterkeys()):
+      for key in sorted(iterkeys(procmgr_macro)):
         tmpfile.write('procmgr_macro[\'%s\'] = \'%s\'\n' % (key, procmgr_macro[key]))
       tmpfile.write('# ----------------------------------------------------------------------------\n')
       tmpfile.write(oldfilecontents)
     except IOError:
-      print '%s: i/o error occurred while creating temporary file' % (sys.argv[0])
+      print('%s: i/o error occurred while creating temporary file' % (sys.argv[0]))
     except:
-      print '%s: error occurred while creating temporary file: %r' % (sys.argv[0], sys.exc_info()[1])
+      print('%s: error occurred while creating temporary file: %r' % (sys.argv[0], sys.exc_info()[1]))
       raise
     else:
   #
@@ -356,9 +399,9 @@ def add_macro_config(procmgr_macro, oldfilename, newfilename):
         newfile.write(tmpfilecontents)
         newfile.close()
       except IOError:
-        print '%s: i/o error occurred while updating \'%s\'' % (sys.argv[0], newfilename)
+        print('%s: i/o error occurred while updating \'%s\'' % (sys.argv[0], newfilename))
       except:
-        print '%s: error occurred while updating \'%s\': %r' % (sys.argv[0], newfilename, sys.exc_info()[1])
+        print('%s: error occurred while updating \'%s\': %r' % (sys.argv[0], newfilename, sys.exc_info()[1]))
 
   return
 
@@ -449,7 +492,7 @@ class ProcMgr:
         dup_list = list()
 
         if (platform == -1):
-            print 'ERR: platform not specified'
+            print('ERR: platform not specified')
             return
         else:
             self.PLATFORM = platform
@@ -462,10 +505,10 @@ class ProcMgr:
         self.INSTRUMENT, self.STATION, self.CURRENTEXPCMD = deduce_instrument(configfilename)
         if self.INSTRUMENT not in self.valid_instruments:
             if self.INSTRUMENT != '':
-              print 'ERR: Invalid instrument ', self.INSTRUMENT
+              print('ERR: Invalid instrument ', self.INSTRUMENT)
             expname = ''
         elif self.STATION < 0:
-            print 'ERR: Invalid station ', self.STATION
+            print('ERR: Invalid station ', self.STATION)
             expname = ''
         elif self.CURRENTEXPCMD != '':
             expname = getCurrentExperiment(self.INSTRUMENT, self.CURRENTEXPCMD, self.STATION)
@@ -478,7 +521,7 @@ class ProcMgr:
             if user:
                 procmgr_macro['USER'] = user
         except:
-            print 'Error determining HOST and USER'
+            print('Error determining HOST and USER')
 
         # The static port allocations must be processed first.
         # Read the config file and make a list with statically assigned
@@ -495,23 +538,23 @@ class ProcMgr:
                   'id':'id', 'cmd':'cmd', 'flags':'flags', 'port':'port', 'host':'host',
                   'rtprio':'rtprio', 'env':'env', 'evr':'evr', 'procmgr_macro': procmgr_macro}
         try:
-          execfile(configfilename, {}, config)
+          execcnf(configfilename, {}, config)
         except:
-          print 'Error parsing configuration file:', sys.exc_info()[1]
+          print('Error parsing configuration file:', sys.exc_info()[1])
 
         if type(config['procmgr_config']) == type([]):
           for dd in config['procmgr_config']:
             if type(dd) == type({}):
-              if dd.has_key('port'):
+              if 'port' in dd:
                 # static port assignments at the beginning of the list
                 configlist.insert(0, dd)
               else:
                 # dynamic port assignments at the end of the list
                 configlist.append(dd)
             else:
-              print 'Error: procmgr_config entry not key:value:', dd
+              print('Error: procmgr_config entry not key:value:', dd)
         else:
-          print 'Error: procmgr_config not a list', config['procmgr_config']
+          print('Error: procmgr_config not a list', config['procmgr_config'])
 
         # for each entry in the list...
         for entry in configlist:
@@ -520,7 +563,7 @@ class ProcMgr:
           # --- real-time priority (optional) ---
           self.rtprio = None
           tmpsum = 0
-          if entry.has_key('rtprio'):
+          if 'rtprio' in entry:
             try:
               tmpsum = int(entry['rtprio'])
             except:
@@ -534,7 +577,7 @@ class ProcMgr:
 
           # --- environment (optional) ---
           self.env = None
-          if entry.has_key('env'):
+          if 'env' in entry:
             if '=' in entry['env']:
               self.env = entry['env']
             else:
@@ -542,7 +585,7 @@ class ProcMgr:
 
           # --- evr (optional) ---
           self.evr = None
-          if entry.has_key('evr'):
+          if 'evr' in entry:
             match = re.match('^(\d)\,(\d)(\d)?$', entry['evr'])
             if match:
               self.evr = match.group()
@@ -550,7 +593,7 @@ class ProcMgr:
               raise ConfigFileError("evr value does not match '<digit>,<digit>[<digit>]': %s" % entry)
 
           # --- cmd (required) ---
-          if entry.has_key('cmd'):
+          if 'cmd' in entry:
 
             # use os.path.realpath() to resolve any symbolic links
             cmdSplit = entry['cmd'].split(None, 1)
@@ -561,7 +604,7 @@ class ProcMgr:
               else:
                 entry['cmd'] = os.path.realpath(cmdZero)
             else:
-              print 'ERR: %s not found' % cmdZero
+              print('ERR: %s not found' % cmdZero)
               entry['cmd'] = '/bin/echo \"File not found: ' + cmdZero + '"'
 
             # if rtprio is set, prefix with /usr/bin/chrt
@@ -582,7 +625,7 @@ class ProcMgr:
             self.cmd = 'error'
 
           # --- id (required) ---
-          if entry.has_key('id'):
+          if 'id' in entry:
             tmpid = entry['id']
             if len(tmpid) > uniqueid_maxlen:
               raise ConfigFileError("ID '%s' exceeds %d characters" % (tmpid, uniqueid_maxlen))
@@ -596,20 +639,20 @@ class ProcMgr:
             self.uniqueid = 'error'
 
           # --- host (optional) ---
-          if entry.has_key('host'):
+          if 'host' in entry:
             self.host = entry['host']
           else:
             self.host = 'localhost'
 
           # --- flags (optional) ---
-          if entry.has_key('flags'):
+          if 'flags' in entry:
             self.flags = entry['flags']
             # evr keyword forces p flag
             if self.evr:
               self.flags += 'p'
             for nextflag in self.flags:
               if (nextflag not in self.valid_flag_list):
-                print 'ERR: invalid flag:', nextflag
+                print('ERR: invalid flag:', nextflag)
           else:
             self.flags = '-'
 
@@ -639,16 +682,16 @@ class ProcMgr:
 
           # --- port (optional) ---
           tmpsum = 0
-          if entry.has_key('port'):
+          if 'port' in entry:
             try:
               tmpsum = int(entry['port'])
             except:
-              print 'Error: malformed port value:', entry
+              print('Error: malformed port value:', entry)
 
           if tmpsum:
             # assign the port statically
             if tmpsum in staticPorts[self.host]:
-                print 'ERR: port #%d duplicated in the config file' % tmpsum
+                print('ERR: port #%d duplicated in the config file' % tmpsum)
             else:
                 # avoid dup: update the set of statically assigned ports
                 staticPorts[self.host].add(tmpsum)
@@ -692,14 +735,14 @@ class ProcMgr:
               try: 
                 ok = self.readLogPortBanner()
               except EOFError:
-                print 'EOFError in readLogPortBanner' 
+                print('EOFError in readLogPortBanner')
                 ok = False
               except:
                 ok = False
               if not ok:
                   # reading procServ banner failed
-                  print "ERR: failed to read procServ banner for \'%s\' on host %s" \
-                          % (self.uniqueid, self.host)
+                  print("ERR: failed to read procServ banner for \'%s\' on host %s" \
+                          % (self.uniqueid, self.host))
               # close connection to the logging port (procServ)
               self.telnet.close()
 
@@ -713,8 +756,8 @@ class ProcMgr:
               (self.tmpstatus != self.STATUS_ERROR) and \
               (gotid != self.uniqueid) and \
               (not gotid.endswith(self.uniqueid+".log"))):
-              print "ERR: found \'%s\', expected \'%s\' on host %s port %s" % \
-                  (gotid, self.uniqueid, self.host, self.ctrlport)
+              print("ERR: found \'%s\', expected \'%s\' on host %s port %s" % \
+                  (gotid, self.uniqueid, self.host, self.ctrlport))
           else:
               # add an entry to the dictionary
               key = makekey(self.host, self.uniqueid)
@@ -734,12 +777,12 @@ class ProcMgr:
     def spawnConsole(self, uniqueid, large=False):
         rv = 1      # return value (0=OK, 1=ERR)
         found = False
-        for key in self.d.iterkeys():
+        for key in iterkeys(self.d):
             if key2uniqueid(key) == uniqueid:
                 found = True
                 break
         if not found:
-            print 'spawnConsole: process \'%s\' not found' % uniqueid
+            print('spawnConsole: process \'%s\' not found' % uniqueid)
         elif ((self.d[key][self.DICT_STATUS] == self.STATUS_RUNNING) or
               (self.d[key][self.DICT_STATUS] == self.STATUS_SHUTDOWN)):
             try:
@@ -757,11 +800,11 @@ class ProcMgr:
                     args = [self.PATH_XTERM, "-T", name, "-e", cmd]
                 subprocess.Popen(args)
             except:
-                print 'spawnConsole failed for process \'%s\'' % uniqueid
+                print('spawnConsole failed for process \'%s\'' % uniqueid)
             else:
                 rv = 0
         else:
-            print 'spawnConsole: process \'%s\' neither RUNNING nor SHUTDOWN' % uniqueid
+            print('spawnConsole: process \'%s\' neither RUNNING nor SHUTDOWN' % uniqueid)
         return rv
 
 
@@ -769,15 +812,15 @@ class ProcMgr:
         rv = 1      # return value (0=OK, 1=ERR)
         logfile = ''
         found = False
-        for key in self.d.iterkeys():
+        for key in iterkeys(self.d):
             if key2uniqueid(key) == uniqueid:
                 found = True
                 logfile = self.procmgr_macro.get('LOGPATH', '.') + '/' + self.d[key][self.DICT_GETID]
                 break
         if not found:
-            print 'spawnLogfile: process \'%s\' not found' % uniqueid
+            print('spawnLogfile: process \'%s\' not found' % uniqueid)
         elif not os.path.exists(logfile):
-            print 'spawnLogfile: process \'%s\' logfile not found' % uniqueid
+            print('spawnLogfile: process \'%s\' logfile not found' % uniqueid)
         elif ((self.d[key][self.DICT_STATUS] == self.STATUS_RUNNING) or
               (self.d[key][self.DICT_STATUS] == self.STATUS_SHUTDOWN)):
             try:
@@ -789,17 +832,17 @@ class ProcMgr:
                     args = [self.PATH_XTERM, "-T", name, "-e", self.PATH_LESS, "+F", logfile]
                 subprocess.Popen(args)
             except:
-                print 'spawnLogfile failed for process \'%s\'' % uniqueid
+                print('spawnLogfile failed for process \'%s\'' % uniqueid)
             else:
                 rv = 0
         else:
-            print 'spawnLogfile: process \'%s\' neither RUNNING nor SHUTDOWN' % uniqueid
+            print('spawnLogfile: process \'%s\' neither RUNNING nor SHUTDOWN' % uniqueid)
         return rv
 
     def readLogPortBanner(self):
-        response = self.telnet.read_until(self.MSG_BANNER_END, 1)
-        if not string.count(response, self.MSG_BANNER_END):
-            print 'readLogPortBanner: banner not found in response: '+response
+        response = tn_read_until(self.telnet, self.MSG_BANNER_END, 1)
+        if not response.count(self.MSG_BANNER_END):
+            print('readLogPortBanner: banner not found in response: '+response)
             self.tmpstatus = self.STATUS_ERROR
             # when reading banner fails, set the ID so the error output includes name instead of '-'
             self.getid = self.uniqueid
@@ -830,11 +873,11 @@ class ProcMgr:
 
         if self.isEmpty():
             if verbose:
-                print "(configuration is empty)"
+                print("(configuration is empty)")
             return 1
 
         # print contents of dictionary (sorted by key)
-        for key in sorted(self.d.iterkeys()):
+        for key in sorted(iterkeys(self.d)):
 
             if len(id_list) > 0:
                 # if id_list is nonempty and UniqueID is not in it,
@@ -849,7 +892,7 @@ class ProcMgr:
 
             if (nonePrinted == 1):
               # print heading, once
-              print "Host          UniqueID     Status     PID    PORT   Command+Args"
+              print("Host          UniqueID     Status     PID    PORT   Command+Args")
               nonePrinted = 0
 
             if (self.d[key][self.DICT_STATUS] == self.STATUS_NOCONNECT):
@@ -861,12 +904,12 @@ class ProcMgr:
             if showhost == 'localhost':
                 showhost = self.procmgr_macro.get('HOST', 'localhost')
 
-            print "%-13s %-12s %-10s %-5s  %-5s  %s" % \
+            print("%-13s %-12s %-10s %-5s  %-5s  %s" % \
                     (showhost, showId, \
                     self.d[key][self.DICT_STATUS], \
                     self.d[key][self.DICT_PID], \
                     self.d[key][self.DICT_CTRL], \
-                    self.d[key][self.DICT_CMD])
+                    self.d[key][self.DICT_CMD]))
 
             if (self.d[key][self.DICT_STATUS] == self.STATUS_RUNNING):
                 if idFoundInList(showId, self.Xterm_list):
@@ -885,10 +928,10 @@ class ProcMgr:
 
             if verbose:
                 if self.d[key][self.DICT_GETID].endswith(".log"):
-                    print "  Logfile:", self.procmgr_macro.get('LOGPATH', '.') + \
-                                        '/' + self.d[key][self.DICT_GETID]
+                    print("  Logfile:", self.procmgr_macro.get('LOGPATH', '.') + \
+                                        '/' + self.d[key][self.DICT_GETID])
         if (nonePrinted == 1):
-          print "(none found)"
+          print("(none found)")
 
         # done
         return 1
@@ -902,10 +945,10 @@ class ProcMgr:
 
         if self.isEmpty():
           if verbose:
-            print "(configuration is empty)"
+            print("(configuration is empty)")
         else:
           # get contents of dictionary (sorted by key)
-          for key in sorted(self.d.iterkeys()):
+          for key in sorted(iterkeys(self.d)):
             # start with empty dictionary
             statusdict = dict()
 
@@ -957,7 +1000,7 @@ class ProcMgr:
             self.telnet.close()
 
         if verbose:
-            print ' --- checkConnection(key=%s) returning %s ---' % (key, connected)
+            print(' --- checkConnection(key=%s) returning %s ---' % (key, connected))
 
         return connected
 
@@ -982,26 +1025,26 @@ class ProcMgr:
 
         if connected:
             # wait for SHUT DOWN message
-            response = self.telnet.read_until(self.MSG_ISSHUTDOWN, 1)
-            if not string.count(response, self.MSG_ISSHUTDOWN):
-                print 'ERR: no SHUT DOWN message in ',
-                print 'response: <<%s>>' % response
+            response = tn_read_until(self.telnet, self.MSG_ISSHUTDOWN, 1)
+            if not response.count(self.MSG_ISSHUTDOWN):
+                print('ERR: no SHUT DOWN message in', end = ' ')
+                print('response: <<%s>>' % response)
 
             # send ^R to restart child process
-            self.telnet.write("\x12");
+            tn_write(self.telnet, "\x12");
 
             # wait for restart message
-            response = self.telnet.read_until(self.MSG_RESTART, 1)
-            if not string.count(response, self.MSG_RESTART):
-                print 'ERR: no restart message... '
+            response = tn_read_until(self.telnet, self.MSG_RESTART, 1)
+            if not response.count(self.MSG_RESTART):
+                print('ERR: no restart message... ')
             else:
                 started = True
 
             # close telnet connection
             self.telnet.close()
         else:
-            print 'ERR: restart() telnet to %s port %s failed' % \
-                (host, value[self.DICT_CTRL])
+            print('ERR: restart() telnet to %s port %s failed' % \
+                (host, value[self.DICT_CTRL]))
 
         return started
 
@@ -1028,11 +1071,11 @@ class ProcMgr:
         if self.isEmpty():
             # configuration is empty -- nothing to start
             if verbose:
-                print 'startAll: empty configuration'
+                print('startAll: empty configuration')
             return 1
 
         if (self.PLATFORM < 0) or (self.PLATFORM > 9):
-            print 'platform %d not in range 0-9' % self.PLATFORM
+            print('platform %d not in range 0-9' % self.PLATFORM)
             return 1
 
         # for redirecting to /dev/null
@@ -1040,7 +1083,7 @@ class ProcMgr:
 
         # create a dictionary mapping hosts to a set of start commands
         startdict = dict()
-        for key, value in self.d.iteritems():
+        for key, value in iteritems(self.d):
             if len(id_list) > 0:
                 # if id_list is nonempty and UniqueID is not in it,
                 # skip this entry
@@ -1077,7 +1120,7 @@ class ProcMgr:
                       mkdir_p(logpath)
                     except:
                       # mkdir
-                      print 'ERR: mkdir <%s> failed' % logpath
+                      print('ERR: mkdir <%s> failed' % logpath)
                       redirect_string = ''
                     else:
                       time_string = time.strftime('%d_%H:%M:%S')
@@ -1089,7 +1132,7 @@ class ProcMgr:
                       logkey = loghost+':'+key2uniqueid(key)
                       logfile = '%s/%s_%s.log' % (logpath, time_string, logkey)
                       if verbose:
-                          print 'log file: <%s>' % logfile
+                          print('log file: <%s>' % logfile)
                       if localFlag:
                           # local: bash shell
                           redirect_string = '>> \"%s\" 2>&1' % logfile
@@ -1101,7 +1144,7 @@ class ProcMgr:
                     try:
                         statmode = os.stat(logpath).st_mode
                     except:
-                        print 'ERR: stat %s failed' % logpath
+                        print('ERR: stat %s failed' % logpath)
                         redirect_string = ''
                     else:
                         if (statmode & pbits) != pbits:
@@ -1109,7 +1152,7 @@ class ProcMgr:
                             # make log path readable/writable/searchable by all
                             os.chmod(logpath, stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
                           except:
-                            print 'ERR: chmod %s failed' % logpath
+                            print('ERR: chmod %s failed' % logpath)
                             redirect_string = ''
 
                 # encode logfile path as part of procServ name
@@ -1124,7 +1167,7 @@ class ProcMgr:
                       outfile.write("# CMDLINE: %s\n" % value[self.DICT_CMD])
                       outfile.close()
                     except:
-                      print "ERR: writing log file '%s' failed" % logfile
+                      print("ERR: writing log file '%s' failed" % logfile)
                     else:
                       pbits = (stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH | stat.S_IWOTH)
                       if (os.stat(logfile).st_mode & pbits) != pbits:
@@ -1132,7 +1175,7 @@ class ProcMgr:
                           # make log file readable/writable by all
                           os.chmod(logfile, pbits)
                         except:
-                          print 'ERR: chmod %s failed' % logfile
+                          print('ERR: chmod %s failed' % logfile)
                 else:
                   name = key2uniqueid(key)
 
@@ -1160,7 +1203,7 @@ class ProcMgr:
         # now use the newly created dictionary to run start command(s)
         # on each host
 
-        for host, value in startdict.iteritems():
+        for host, value in iteritems(startdict):
 
             if (host == 'localhost'):
                 # process list of commands
@@ -1168,13 +1211,13 @@ class ProcMgr:
                     # send command
                     args, key = value.pop()
                     if verbose:
-                        print 'Run locally: %s' % args
+                        print('Run locally: %s' % args)
 
                     yy = subprocess.Popen(args, stdout=nullOut, stderr=nullOut, shell=True)
                     yy.wait()
                     if (yy.returncode != 0):
-                        print "ERR: failed to run '%s' (procServ returned %d)" % \
-                            (args, yy.returncode)
+                        print("ERR: failed to run '%s' (procServ returned %d)" % \
+                            (args, yy.returncode))
                     else:
                         self.setStatus([key], self.STATUS_RUNNING)
                         started_count += 1
@@ -1184,20 +1227,20 @@ class ProcMgr:
                     self.telnet.open(host, self.EXECMGRCTRL)
                 except:
                     # telnet failed
-                    print 'ERR: telnet to procmgr (%s port %d) failed' % \
-                            (host, self.EXECMGRCTRL)
-                    print '>>> Please start the procServ process on host %s!' % host
+                    print('ERR: telnet to procmgr (%s port %d) failed' % \
+                            (host, self.EXECMGRCTRL))
+                    print('>>> Please start the procServ process on host %s!' % host)
                 else:
                     # telnet succeeded
 
                     # send ^U followed by carriage return to safely reach the prompt
-                    self.telnet.write("\x15\x0d");
+                    tn_write(self.telnet, "\x15\x0d");
 
                     # wait for prompt (procServ)
-                    response = self.telnet.read_until(self.MSG_PROMPT, 2)
-                    if not string.count(response, self.MSG_PROMPT):
-                        print 'ERR: no prompt at %s port %s' % \
-                            (key2host(key), self.EXECMGRCTRL)
+                    response = tn_read_until(self.telnet, self.MSG_PROMPT, 2)
+                    if not response.count(self.MSG_PROMPT):
+                        print('ERR: no prompt at %s port %s' % \
+                            (key2host(key), self.EXECMGRCTRL))
 
                     # process list of commands
                     while len(value) > 0:
@@ -1205,15 +1248,15 @@ class ProcMgr:
                         nextcmd, nextkey = value.pop()
 
                         if verbose:
-                            print 'Run on %s: %s' % (host, nextcmd)
+                            print('Run on %s: %s' % (host, nextcmd))
 
                         # send command
-                        self.telnet.write('%s\n' % nextcmd);
+                        tn_write(self.telnet, '%s\n' % nextcmd);
                         # wait for prompt
-                        response = self.telnet.read_until(self.MSG_PROMPT, 2)
-                        if not string.count(response, self.MSG_PROMPT):
-                            print 'ERR: no prompt at %s port %s' % \
-                                (host, self.EXECMGRCTRL)
+                        response = tn_read_until(self.telnet, self.MSG_PROMPT, 2)
+                        if not response.count(self.MSG_PROMPT):
+                            print('ERR: no prompt at %s port %s' % \
+                                (host, self.EXECMGRCTRL))
                         else:
                             #
                             # If X flag is set, procServ --wait is used so
@@ -1229,7 +1272,7 @@ class ProcMgr:
         if len(xlist) > 0 or len(Xlist) > 0:
           # is xterm available?
           if not os.path.exists(self.PATH_XTERM):
-            print 'ERR: %s not available' % self.PATH_XTERM
+            print('ERR: %s not available' % self.PATH_XTERM)
           else:
             # order matters: start large xterms last so they will be on top
 
@@ -1274,7 +1317,7 @@ class ProcMgr:
         telnetdict = dict()
 
         # open telnet connections
-        for key, value in stopdict.iteritems():
+        for key, value in iteritems(stopdict):
             connected = False
             telnetCount = 0
             host = key2host(key)
@@ -1294,10 +1337,10 @@ class ProcMgr:
             if connected:
                 telnetdict[key] = connection
             else:
-                print 'ERR: telnet to %s port %r failed' % (host, value[self.DICT_CTRL]),
+                print('ERR: telnet to %s port %r failed' % (host, value[self.DICT_CTRL]))
 
         # send ^C to selected connections
-        for key, connection in telnetdict.iteritems():
+        for key, connection in iteritems(telnetdict):
             if (not 's' in stopdict[key][self.DICT_FLAGS]):
                 # no 's' flag: skip sending ^C
                 continue
@@ -1305,18 +1348,18 @@ class ProcMgr:
                 progressMessage('sending ^C to %r (%s port %s)' % (key, key2host(key), stopdict[key][self.DICT_CTRL]))
             try:
                 # 0x03 = ^C
-                telnetdict[key].write("\x03");
+                tn_write(telnetdict[key], "\x03");
                 # wait for SHUT DOWN message
-                response = telnetdict[key].read_until(self.MSG_ISSHUTTING, 1)
+                response = tn_read_until(telnetdict[key], self.MSG_ISSHUTTING, 1)
             except:
                 rv = 1
                 if verbose:
-                    print 'FAILED'
-                print 'ERR: Exception while shutting down %r client: %r' % (key, sys.exc_info()[1])
+                    print('FAILED')
+                print('ERR: Exception while shutting down %r client: %r' % (key, sys.exc_info()[1]))
             else:
                 if verbose:
-                    print 'done'
-                if string.count(response, self.MSG_ISSHUTTING)  or string.count(response, self.MSG_ISSHUTDOWN):
+                    print('done')
+                if response.count(self.MSG_ISSHUTTING)  or response.count(self.MSG_ISSHUTDOWN):
                     # change status to SHUTDOWN
                     self.setStatus([key], self.STATUS_SHUTDOWN)
                     stopcount += 1
@@ -1327,55 +1370,55 @@ class ProcMgr:
                 progressMessage('waiting %d seconds' % sigdelay)
             sleep(sigdelay)
             if verbose:
-                print 'done'
+                print('done')
 
         # send ^X to connections where status is not SHUTDOWN
-        for key, connection in telnetdict.iteritems():
+        for key, connection in iteritems(telnetdict):
             if (self.d[key][self.DICT_STATUS] != self.STATUS_RUNNING):
                 continue    # skip
             if verbose:
                 progressMessage('sending ^X to %r (%s port %s)' % (key, key2host(key), stopdict[key][self.DICT_CTRL]))
             try:
                 # 0x18 = ^X
-                telnetdict[key].write("\x18");
+                tn_write(telnetdict[key], "\x18");
                 # wait for KILLED message
-                response = telnetdict[key].read_until(self.MSG_KILLED, 1)
+                response = tn_read_until(telnetdict[key], self.MSG_KILLED, 1)
             except:
                 rv = 1
                 if verbose:
-                    print 'FAILED'
-                print 'ERR: Exception while killing %r client: %r' % (key, sys.exc_info()[1])
+                    print('FAILED')
+                print('ERR: Exception while killing %r client: %r' % (key, sys.exc_info()[1]))
             else:
-                if not (string.count(response, self.MSG_KILLED)):
+                if not response.count(self.MSG_KILLED):
                     if verbose:
-                        print 'FAILED'
-                    print 'ERR: no \'%s\' response from %r: <<%s>>' % (self.MSG_KILLED, key, response)
+                        print('FAILED')
+                    print('ERR: no \'%s\' response from %r: <<%s>>' % (self.MSG_KILLED, key, response))
                     rv = 1
                 else:
                     # change status to SHUTDOWN
                     self.setStatus([key], self.STATUS_SHUTDOWN)
                     stopcount += 1
                     if verbose:
-                        print 'done'
+                        print('done')
 
         # send ^Q to all connections
-        for key, connection in telnetdict.iteritems():
+        for key, connection in iteritems(telnetdict):
             if verbose:
                 progressMessage('sending ^Q to %r (%s port %s)' % (key, key2host(key), stopdict[key][self.DICT_CTRL]))
             try:
                 # 0x11 = ^Q
-                telnetdict[key].write("\x11");
+                tn_write(telnetdict[key], "\x11");
             except:
                 rv = 1
-                print 'ERR: Exception while quitting %r procServ: %r' % (key, sys.exc_info()[1])
+                print('ERR: Exception while quitting %r procServ: %r' % (key, sys.exc_info()[1]))
             else:
                 # change status to NOCONNECT
                 self.setStatus([key], self.STATUS_NOCONNECT)
                 if verbose:
-                    print 'done'
+                    print('done')
 
         # close all connections
-        for key, connection in telnetdict.iteritems():
+        for key, connection in iteritems(telnetdict):
             connection.close()
 
         return rv
@@ -1395,10 +1438,10 @@ class ProcMgr:
         if self.isEmpty():
             # configuration is empty -- nothing to disconnect
             if verbose:
-                print 'nothing to disconnect'
+                print('nothing to disconnect')
         else:
             stopdict = dict()
-            for key, value in self.d.iteritems():
+            for key, value in iteritems(self.d):
 
                 if len(id_list) > 0:
                     # if id_list is nonempty and UniqueID is not in it,
@@ -1410,8 +1453,8 @@ class ProcMgr:
                     # skip this entry
                     if 'k' in value[self.DICT_FLAGS]:
                         if verbose and value[self.DICT_STATUS] != self.STATUS_NOCONNECT:
-                            print '\'%s\' not stopped: this is a static task' % \
-                                key2uniqueid(key)
+                            print('\'%s\' not stopped: this is a static task' % \
+                                key2uniqueid(key))
                         continue
 
                 if only_static and ('k' not in self.d[key][self.DICT_FLAGS]):
@@ -1425,7 +1468,7 @@ class ProcMgr:
             try:
                 rv = self.stopDictionary(stopdict, verbose, sigdelay)
             except:
-                print 'stopDictionary() Error:', sys.exc_info()[1]
+                print('stopDictionary() Error:', sys.exc_info()[1])
 
         # done
         return rv
@@ -1440,7 +1483,7 @@ class ProcMgr:
         # count the processes that are not NOCONNECT
         staticProcessCount = 0
         dynamicProcessCount = 0
-        for key, value in self.d.iteritems():
+        for key, value in iteritems(self.d):
             if (value[self.DICT_STATUS] != self.STATUS_NOCONNECT):
                 if ('k' in self.d[key][self.DICT_FLAGS]):
                     staticProcessCount += 1
@@ -1470,7 +1513,7 @@ class ProcMgr:
             if key in self.d:
                 self.d[key][self.DICT_STATUS] = newStatus
             else:
-                print "ERR: setStatus: key '%s' not found" % key
+                print("ERR: setStatus: key '%s' not found" % key)
                 return 1
 
         return 0
@@ -1485,73 +1528,73 @@ if __name__ == '__main__':
     if len(sys.argv) == 2:
         platform = default_platform
     elif len(sys.argv) != 3:
-        print usage
+        print(usage)
         sys.exit(1)
     else:
         try:
             platform = int(sys.argv[2])
         except ValueError:
             platform = default_platform
-            print "%s: invalid platform (%s), using default (%d)" % (sys.argv[0], sys.argv[2], platform)
+            print("%s: invalid platform (%s), using default (%d)" % (sys.argv[0], sys.argv[2], platform))
 
     # collect the status, reading from the config file
-    print '-------- calling ProcMgr(%s, %d)' % (sys.argv[1], platform)
+    print('-------- calling ProcMgr(%s, %d)' % (sys.argv[1], platform))
     try:
         procMgr = ProcMgr(sys.argv[1], platform)
     except IOError:
-        print "%s: error while accessing %s %d" % (sys.argv[0], sys.argv[1], platform)
+        print("%s: error while accessing %s %d" % (sys.argv[0], sys.argv[1], platform))
         sys.exit(1)
 
     # error check
     if procMgr.isEmpty():
-        print 'configuration is empty.  exiting now'
+        print('configuration is empty.  exiting now')
         sys.exit(1)
 
     # show the status
-    print '-------- calling show(0)'
+    print('-------- calling show(0)')
     procMgr.show(0)
 
     # stop all
-    print '-------- calling stopAll()'
+    print('-------- calling stopAll()')
     procMgr.stopAll()
 
     # delete the previous status (is this right?)
     del procMgr
 
     # collect the status again
-    print '-------- calling ProcMgr(%s, %d)' % (sys.argv[1], platform)
+    print('-------- calling ProcMgr(%s, %d)' % (sys.argv[1], platform))
     try:
         procMgr = ProcMgr(sys.argv[1], platform)
     except IOError:
-        print "%s: error while accessing %d" % (sys.argv[0], sys.argv[1], platform)
+        print("%s: error while accessing %d" % (sys.argv[0], sys.argv[1], platform))
         sys.exit(1)
 
     # error check
     if procMgr.isEmpty():
-        print 'configuration is empty.  exiting now'
+        print('configuration is empty.  exiting now')
         sys.exit(1)
 
     # show the status again
-    print '-------- calling show(0)'
+    print('-------- calling show(0)')
     procMgr.show(0)
 
     # start all
-    print '-------- calling startAll(1)'
+    print('-------- calling startAll(1)')
     procMgr.startAll(1)
 
     # delete the previous status (is this right?)
     del procMgr
 
     # collect the status again
-    print '-------- calling ProcMgr(%s, %d)' % (sys.argv[1], platform)
+    print('-------- calling ProcMgr(%s, %d)' % (sys.argv[1], platform))
     try:
         procMgr = ProcMgr(sys.argv[1], platform)
     except IOError:
-        print "%s: error while accessing %s %d" % (sys.argv[0], sys.argv[1], platform)
+        print("%s: error while accessing %s %d" % (sys.argv[0], sys.argv[1], platform))
         sys.exit(1)
 
     # show the status again
-    print '-------- calling show(0)'
+    print('-------- calling show(0)')
     procMgr.show(0)
 
-    print '-------- done'
+    print('-------- done')
