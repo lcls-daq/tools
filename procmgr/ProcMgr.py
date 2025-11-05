@@ -22,6 +22,8 @@ else:
 
 uniqueid_maxlen = 30;
 
+rhel_re = re.compile(r'[._]el(?P<version>\d+)[._]')
+
 #
 # getConfigFileNames
 #
@@ -221,6 +223,23 @@ def tn_write(tn, msg):
       tn.write(msg.encode('ascii'))
 
 #
+# deduce_arch - deduce appropriate arch for the current host
+#
+# Returns: returns the appropriate arch for the current host
+#
+def deduce_arch():
+    _, _, kernel, _, arch = os.uname()
+    match = rhel_re.search(kernel)
+    rhel_version = 'linux'
+    if match:
+      rhel_version = int(match.group('version'))
+      if rhel_version > 5:
+        rhel_version = 'rhel%d' % rhel_version
+    if arch in ['i686', 'i386', 'x86']:
+        arch = 'i386'
+    return arch + '-' + rhel_version
+
+#
 # deduce_procserv - deduce appropriate procserv process by guessing arch from cmd
 #
 # Returns: returns appropriate procserv, defaults to 32-bit to backwards compat.
@@ -253,7 +272,7 @@ def deduce_procserv(cmd=None):
 #
 def deduce_platform(configfilename):
     rv = -1   # return -1 on error
-    cc = {'platform': None, 'procmgr_config': None,
+    cc = {'platform': None, 'procmgr_config': None, 'arch': deduce_arch(),
           'id':'id', 'cmd':'cmd', 'flags':'flags', 'port':'port', 'host':'host',
           'rtprio':'rtprio', 'env':'env', 'evr':'evr', 'procmgr_macro': {}}
     try:
@@ -273,7 +292,7 @@ def deduce_platform(configfilename):
 def deduce_platform2(configfilename):
     platform_rv = -1   # return -1 on error
     macro_rv = {}
-    cc = {'platform': None, 'procmgr_config': None,
+    cc = {'platform': None, 'procmgr_config': None, 'arch': deduce_arch(),
           'id':'id', 'cmd':'cmd', 'flags':'flags', 'port':'port', 'host':'host',
           'rtprio':'rtprio', 'env':'env', 'evr':'evr', 'procmgr_macro': {}}
     try:
@@ -301,7 +320,7 @@ def deduce_instrument(configfilename):
     instr_name = ''
     currentexpcmd = ''
     station_number = 0
-    cc = {'instrument': None, 'platform': None, 'procmgr_config': None,
+    cc = {'instrument': None, 'platform': None, 'procmgr_config': None, 'arch': deduce_arch(),
           'id':'id', 'cmd':'cmd', 'flags':'flags', 'port':'port', 'host':'host',
           'rtprio':'rtprio', 'env':'env', 'evr':'evr', 'procmgr_macro': {}, 'currentexpcmd': None}
 
@@ -500,6 +519,8 @@ class ProcMgr:
         if (self.PLATFORM > 0):
             self.EXECMGRCTRL += (self.PLATFORM * 100)
 
+        self.ARCH = deduce_arch()
+
         # initialize the experiment
         # (only used by online_ami to get current experiment)
         self.INSTRUMENT, self.STATION, self.CURRENTEXPCMD = deduce_instrument(configfilename)
@@ -534,7 +555,7 @@ class ProcMgr:
 
         configlist = []         # start out with empty list
 
-        config = {'platform': repr(self.PLATFORM), 'procmgr_config': None,
+        config = {'platform': repr(self.PLATFORM), 'procmgr_config': None, 'arch': self.ARCH,
                   'id':'id', 'cmd':'cmd', 'flags':'flags', 'port':'port', 'host':'host',
                   'rtprio':'rtprio', 'env':'env', 'evr':'evr', 'procmgr_macro': procmgr_macro}
         try:
