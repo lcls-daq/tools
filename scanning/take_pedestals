@@ -1,21 +1,11 @@
 #!/bin/bash
 
-# guess the arch to use for the daq
-source /cds/group/pcds/setup/lsb_family.sh
-if [ "$kernel_family" == "rhel7" ]; then
-    DAQ_ARCH=x86_64-rhel7-opt
-elif [ "$kernel_family" == "rhel6" ]; then
-    DAQ_ARCH=x86_64-rhel6-opt
-elif [ "$kernel_family" == "rhel5" ]; then
-    DAQ_ARCH=x86_64-linux-opt
-else
-    DAQ_ARCH=x86_64-linux-opt
-fi
-
 # script name
 SCRIPT="$(basename "${BASH_SOURCE[0]}.py")"
 # find the daq release
 DAQ_RELEASE="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/../.."; pwd -P)"
+# find the daq arch
+source "${DAQ_RELEASE}/tools/scripts/lsb_family.sh"
 # find the python version from the DAQ
 PY_DIR="$(cd "$(readlink -f "${DAQ_RELEASE}/build/python3/include")/../bin"; pwd -P)"
 # add the daq python modules to the path
