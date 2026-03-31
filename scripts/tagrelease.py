@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #
 
 import os
@@ -47,7 +47,7 @@ def make_tagd(pkg):
     if (os.path.isdir(pkg)):
         retval = make_tag(pkg)
     else:
-        print 'Warning: directory \'%s\' not found, tagging skipped' % pkg
+        print('Warning: directory \'%s\' not found, tagging skipped' % pkg)
     return retval
 
 def fetch(project_path):
@@ -92,7 +92,7 @@ if __name__ == '__main__':
         fail = False
         # sanity check 0: tag begins with 'V' or 'ami-V'
         if tag.find('V') and tag.find('ami-V'):
-            print 'sanity check failed: tag \'%s\' does not begin with \'V\' or \'ami-V\'' % tag 
+            print('sanity check failed: tag \'%s\' does not begin with \'V\' or \'ami-V\'' % tag)
             fail = True
 
         # sanity check 1: check that local branches synced with remote
@@ -100,80 +100,80 @@ if __name__ == '__main__':
             fetch(dir)
             fetch_tags(dir)
             if compare_rev(dir):
-                print 'sanity check failed: working directory \'%s\' out of sync with remote' % dir
+                print('sanity check failed: working directory \'%s\' out of sync with remote' % dir)
                 fail = True
 
         # sanity check 2: check that current directory and submodules are clean
         for dir in dirlist:
             if status(dir):
-                print 'sanity check failed: working directory \'%s\' has uncommited changes' % dir
+                print('sanity check failed: working directory \'%s\' has uncommited changes' % dir)
                 fail = True
 
         # sanity check 3: tag does not already exist
         for dir in dirlist:
             if verify_tag(dir):
-                print 'sanity check failed: tag \'%s\' already exists for directory \'%s\'' % (tag, dir)
+                print('sanity check failed: tag \'%s\' already exists for directory \'%s\'' % (tag, dir))
                 fail = True
 
         # sanity check 4: current directory is on the requested branch
         cwdprop = get_current_branch(".")
         if (not cwdprop) or (cwdprop.find(branch) == -1):
-            print 'sanity check failed: working directory is not on the requested branch'
+            print('sanity check failed: working directory is not on the requested branch')
             fail = True
 
         # sanity check 5: current directory contains expected subdirectories
         for dir in dirlist:
             if dir != 'release' and dir != 'ami-release' and dir != '.' and not os.path.isdir(dir):
-                print 'sanity check failed: working directory does not include \'%s\' subdirectory' % dir
+                print('sanity check failed: working directory does not include \'%s\' subdirectory' % dir)
                 fail = True
             cwdprop = get_current_branch(dir)
             if (not cwdprop) or (cwdprop.find(branch) == -1):
-                print 'sanity check failed: working directory \'%s\' is not on the requested branch' % dir
+                print('sanity check failed: working directory \'%s\' is not on the requested branch' % dir)
                 fail = True
 
         if fail: 
-            print 'tag \'%s\' not applied (sanity check failure)' % tag
+            print('tag \'%s\' not applied (sanity check failure)' % tag)
             sys.exit(1)
 
     if options.dry_run:
-        print 'tag \'%s\' not applied (dry run)' % tag
+        print('tag \'%s\' not applied (dry run)' % tag)
         sys.exit(0)
 
     retval = 0
     if tag.find('ami')<0:
         if make_tag('.'):
             retval = 1
-            print 'Error: tagging release failed'
+            print('Error: tagging release failed')
         else:
             for dir in daq_subdirs:
                 if make_tagd(dir):
                     retval = 1
-                    print 'Error: tagging %s failed' % dir
+                    print('Error: tagging %s failed' % dir)
             # update remote
             if push('.'):
                 retval = 1
-                print 'Error: pushing release failed'
+                print('Error: pushing release failed')
             else:
                 for dir in daq_subdirs:
                     if push(dir):
                         retval = 1
-                        print 'Error: pushing %s failed' % dir
+                        print('Error: pushing %s failed' % dir)
             retval = 0  # success
     else:
         if make_tag('.'):
             retval = 1
-            print 'Error: tagging ami-release failed'
+            print('Error: tagging ami-release failed')
         else:
             for dir in ami_subdirs:
                 make_tagd(dir)
             # update remote
             if push('.'):
                 retval = 1
-                print 'Error: pushing ami-release failed'
+                print('Error: pushing ami-release failed')
             else:
                 for dir in ami_subdirs:
                     if push(dir):
                         retval = 1
-                        print 'Error: pushing %s failed' % dir
+                        print('Error: pushing %s failed' % dir)
             retval = 0  # success
     sys.exit(retval)
