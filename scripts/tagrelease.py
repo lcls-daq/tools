@@ -51,26 +51,26 @@ def make_tagd(pkg):
     return retval
 
 def fetch(project_path):
-    p = subprocess.Popen(['/usr/bin/git fetch origin'], cwd = project_path, shell = True, stdout = subprocess.PIPE, close_fds = True)
-    return subprocess.Popen.communicate(p)[0]
+    p = subprocess.Popen(['/usr/bin/git fetch origin'], cwd=project_path, shell=True, stdout=subprocess.PIPE, close_fds=True)
+    return subprocess.Popen.communicate(p)[0].decode("utf-8")
 
 def fetch_tags(project_path):
-    p = subprocess.Popen(['/usr/bin/git fetch origin --tags'], cwd = project_path, shell = True, stdout = subprocess.PIPE, close_fds = True)
-    return subprocess.Popen.communicate(p)[0]
+    p = subprocess.Popen(['/usr/bin/git fetch origin --tags'], cwd=project_path, shell=True, stdout=subprocess.PIPE, close_fds=True)
+    return subprocess.Popen.communicate(p)[0].decode("utf-8")
 
 def status(project_path):
-    p = subprocess.Popen(['/usr/bin/git status --porcelain'], cwd = project_path, shell = True, stdout = subprocess.PIPE, close_fds = True)
-    return subprocess.Popen.communicate(p)[0]
+    p = subprocess.Popen(['/usr/bin/git status --porcelain'], cwd=project_path, shell=True, stdout=subprocess.PIPE, close_fds=True)
+    return subprocess.Popen.communicate(p)[0].decode("utf-8")
 
 def get_current_branch(project_path):
-    p = subprocess.Popen(['/usr/bin/git rev-parse --abbrev-ref HEAD'], cwd = project_path, shell = True, stdout = subprocess.PIPE, close_fds = True)
-    return subprocess.Popen.communicate(p)[0]
+    p = subprocess.Popen(['/usr/bin/git rev-parse --abbrev-ref HEAD'], cwd=project_path, shell=True, stdout=subprocess.PIPE, close_fds=True)
+    return subprocess.Popen.communicate(p)[0].decode("utf-8")
 
 def compare_rev(project_path):
-    p = subprocess.Popen(['/usr/bin/git rev-parse '+branch], cwd = project_path, shell = True, stdout = subprocess.PIPE, close_fds = True)
-    loc = subprocess.Popen.communicate(p)[0]
-    p = subprocess.Popen(['/usr/bin/git rev-parse origin/'+branch], cwd = project_path, shell = True, stdout = subprocess.PIPE, close_fds = True)
-    rem = subprocess.Popen.communicate(p)[0]
+    p = subprocess.Popen(['/usr/bin/git rev-parse '+branch], cwd=project_path, shell=True, stdout=subprocess.PIPE, close_fds=True)
+    loc = subprocess.Popen.communicate(p)[0].decode("utf-8")
+    p = subprocess.Popen(['/usr/bin/git rev-parse origin/'+branch], cwd=project_path, shell=True, stdout=subprocess.PIPE, close_fds=True)
+    rem = subprocess.Popen.communicate(p)[0].decode("utf-8")
     return loc != rem
 
 
