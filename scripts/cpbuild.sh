@@ -4,7 +4,14 @@
 #
 if ($# < 1) exit
 
-setenv DAQREL /reg/g/pcds/dist/pds/$1
+# Check if we are on cds or sdf
+if ( -d /cds/group/pcds/dist/pds ); then
+    setenv DAQBASE /cds/group/pcds/dist/pds
+else
+    setenv DAQBASE /sdf/group/lcls/ds/daq
+endif
+
+setenv DAQREL ${DAQBASE}/$1
 mkdir -p ${DAQREL}
 #  Copy libraries and binaries
 rsync -rlpogtSP --exclude={dep,obj} build ${DAQREL}/.
@@ -23,9 +30,9 @@ if ( -e build/ami ) then
 endif
 
 # Create soft link in DAQREL directory
-cd /reg/g/pcds/dist/pds
-if ( -e /reg/g/pcds/dist/pds/current ) then
-    rm -f /reg/g/pcds/dist/pds/current
+cd ${DAQBASE}
+if ( -e ${DAQBASE}/current ) then
+    rm -f ${DAQBASE}/current
 endif
 ln -s ./$1 current
 cd -

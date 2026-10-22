@@ -17,6 +17,9 @@ do
     elif [ "$label" == "rhel9" ]; then
         tools/scripts/build_ami.sh --clean --fail
         buildtype="$label"
+    elif [ "$label" == "rhel8" ]; then
+        tools/scripts/build_ami.sh --clean --fail
+        buildtype="$label"
     elif [ "$label" == "rhel7" ]; then
         tools/scripts/build_ami.sh --clean --fail
         buildtype="$label"

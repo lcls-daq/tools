@@ -4,7 +4,14 @@
 #
 if ($# < 1) exit
 
-setenv AMIREL /reg/g/pcds/dist/pds/ami-$1
+# Check if we are on cds or sdf
+if ( -d /cds/group/pcds/dist/pds ); then
+    setenv AMIBASE /cds/group/pcds/dist/pds
+else
+    setenv AMIBASE /sdf/group/lcls/ds/daq
+endif
+
+setenv AMIREL ${AMIBASE}/ami-$1
 mkdir -p ${AMIREL}
 mkdir -p ${AMIREL}/ami
 
@@ -17,9 +24,9 @@ mkdir -p ${AMIREL}/ami/event
 rsync -rlpogtSP ami/event/CspadTemp.hh ${AMIREL}/ami/event/.
 
 # Create soft link in DAQREL directory
-cd /reg/g/pcds/dist/pds
-if ( -e /reg/g/pcds/dist/pds/ami-current ) then
-    rm -f /reg/g/pcds/dist/pds/ami-current
+cd ${AMIBASE}
+if ( -e ${AMIBASE}/ami-current ) then
+    rm -f ${AMIBASE}/ami-current
 endif
 ln -sf ./ami-$1 ami-current
 chmod g+w ami-current

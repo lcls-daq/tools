@@ -17,6 +17,9 @@ elif [[ `uname -r` == *el6* ]]; then
 elif [[ `uname -r` == *el7* ]]; then
     tools/scripts/build.sh --clean --fail
     buildtype="rhel7"
+elif [[ `uname -r` == *el8* ]]; then
+    tools/scripts/build.sh --clean --fail
+    buildtype="rhel8"
 elif [[ `uname -r` == *el9* ]]; then
     tools/scripts/build.sh --clean --fail
     buildtype="rhel9"

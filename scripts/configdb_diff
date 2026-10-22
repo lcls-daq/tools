@@ -7,6 +7,8 @@ elif [[ `uname -r` == *el6* ]]; then
     DAQ_ARCH=x86_64-rhel6-opt
 elif [[ `uname -r` == *el7* ]]; then
     DAQ_ARCH=x86_64-rhel7-opt
+elif [[ `uname -r` == *el8* ]]; then
+    DAQ_ARCH=x86_64-rhel8-opt
 elif [[ `uname -r` == *el9* ]]; then
     DAQ_ARCH=x86_64-rhel9-opt
 else

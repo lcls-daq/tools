@@ -30,9 +30,16 @@ else
     RELTYP="pdsapp"
 fi
 
-DAQREL="/reg/g/pcds/dist/pds/$1"
-OLDREL="/reg/g/pcds/dist/pds/${1}_old"
-BOT="/reg/g/pcds/dist/pds/ci-artifacts"
+# Check if we are on cds or sdf
+if [ -d "/cds/group/pcds/dist/pds" ]; then
+    DAQBASE="/cds/group/pcds/dist/pds"
+else
+    DAQBASE="/sdf/group/lcls/ds/daq"
+fi
+
+DAQREL="${DAQBASE}/$1"
+OLDREL="${DAQBASE}/${1}_old"
+BOT="${DAQBASE}/ci-artifacts"
 
 # delete old release
 if [ -d "${OLDREL}" ]; then
@@ -76,6 +83,16 @@ if [ ! -z $DAQBOT ]; then
     cp -rf $DAQBOT $DAQREL
     /bin/tar -xzf $DAQREL/*rhel7*.tar.gz
     rm -f $DAQREL/*rhel7*.tar.gz
+fi
+
+#  Copy rhel8 libraries and binaries
+DAQBOT=$(ls -t -1 $BOT/pdsbuild-${RELTYP}-rhel8-* || echo)
+for i in ${DAQBOT[@]}; do DAQBOT="$i"; break; done
+if [ ! -z $DAQBOT ]; then
+    echo "Copying $DAQBOT to $DAQREL"
+    cp -rf $DAQBOT $DAQREL
+    /bin/tar -xzf $DAQREL/*rhel8*.tar.gz
+    rm -f $DAQREL/*rhel8*.tar.gz
 fi
 
 #  Copy rhel9 libraries and binaries

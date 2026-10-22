@@ -32,7 +32,14 @@ else
     CURRENT="current"
 fi
 
-DAQREL="/cds/group/pcds/dist/pds/$1"
+# Check if we are on cds or sdf
+if [ -d "/cds/group/pcds/dist/pds" ]; then
+    DAQBASE="/cds/group/pcds/dist/pds"
+else
+    DAQBASE="/sdf/group/lcls/ds/daq"
+fi
+
+DAQREL="${DAQBASE}/$1"
 mkdir -p ${DAQREL}
 CWD=`pwd`
 cd $DAQREL
@@ -67,6 +74,16 @@ if [ ! -z $DAQBOT ]; then
     rm -f $DAQREL/*rhel7*.tar.gz
 fi
 
+#  Copy rhel8 libraries and binaries
+DAQBOT=$(ls -t -1 $CWD/pdsbuild-${RELTYP}-rhel8-*-${1}* || echo)
+for i in ${DAQBOT[@]}; do DAQBOT="$i"; break; done
+if [ ! -z $DAQBOT ]; then
+    echo "Copying $DAQBOT to $DAQREL"
+    cp -rf $DAQBOT $DAQREL
+    /bin/tar -xzf $DAQREL/*rhel8*.tar.gz
+    rm -f $DAQREL/*rhel8*.tar.gz
+fi
+
 #  Copy rhel9 libraries and binaries
 DAQBOT=$(ls -t -1 $CWD/pdsbuild-${RELTYP}-rhel9-*-${1}* || echo)
 for i in ${DAQBOT[@]}; do DAQBOT="$i"; break; done
@@ -78,10 +95,10 @@ if [ ! -z $DAQBOT ]; then
 fi
 
 # Create soft link in DAQREL directory
-cd /reg/g/pcds/dist/pds
-if [ -e /reg/g/pcds/dist/pds/${CURRENT} ]; then
-    rm -f /reg/g/pcds/dist/pds/${CURRENT}
+cd "${DAQBASE}"
+if [ -e "${DAQBASE}/${CURRENT}" ]; then
+    rm -f "${DAQBASE}/${CURRENT}"
 fi
-ln -s ./$1 ${CURRENT}
+ln -s ./$1 "${CURRENT}"
 
 cd $CWD

@@ -17,6 +17,9 @@ do
     elif [ "$label" == "rhel9" ]; then
         tools/scripts/build.sh --clean --fail --no32
         buildtype="$label"
+    elif [ "$label" == "rhel8" ]; then
+        tools/scripts/build.sh --clean --fail --no32
+        buildtype="$label"
     elif [ "$label" == "rhel7" ]; then
         tools/scripts/build.sh --clean --fail --no32
         buildtype="$label"
