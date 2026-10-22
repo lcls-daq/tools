@@ -245,12 +245,19 @@ def deduce_arch():
 # Returns: returns appropriate procserv, defaults to 32-bit to backwards compat.
 #
 def deduce_procserv(cmd=None):
-    default = "/cds/group/pcds/package/procServ-2.6.0-daq/linux-x86_64/bin/procServ"
-    multiarchbase = "/cds/group/pcds/package/procServ-2.6.0-daq/%s/bin/procServ"
+    if os.path.exists("/cds/group/pcds/package/procServ-2.6.0-daq"):
+        prefix = "/cds/group/pcds/package/procServ-2.6.0-daq"
+    else:
+        prefix = "/sdf/group/lcls/ds/daq/external/procServ-2.6.0-daq"
+
+    default = prefix + "/linux-x86_64/bin/procServ"
+    multiarchbase = prefix + "/%s/bin/procServ"
     if cmd is None:
       return default
     elif "x86_64-rhel9" in cmd:
       return multiarchbase % "rhel9-x86_64"
+    elif "x86_64-rhel8" in cmd:
+      return multiarchbase % "rhel8-x86_64"
     elif "x86_64-rhel7" in cmd:
       return multiarchbase % "rhel7-x86_64"
     elif "x86_64-rhel6" in cmd:
