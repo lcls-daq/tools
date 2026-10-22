@@ -60,8 +60,8 @@ if [ "$LSB_FAMILY" == "rhel9" ]; then
     DAQ_ARCH=x86_64-rhel9-opt
     PKG_ARCH=x86_64-rhel9-gcc114-opt
 elif [ "$LSB_FAMILY" == "rhel8" ]; then
-    DAQ_ARCH=x86_64-rhel7-opt
-    PKG_ARCH=x86_64-rhel7-gcc48-opt
+    DAQ_ARCH=x86_64-rhel8-opt
+    PKG_ARCH=x86_64-rhel8-gcc85-opt
 elif [ "$LSB_FAMILY" == "rhel7" ]; then
     DAQ_ARCH=x86_64-rhel7-opt
     PKG_ARCH=x86_64-rhel7-gcc48-opt
