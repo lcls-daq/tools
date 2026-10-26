@@ -9,19 +9,19 @@ fi
 
 buildtype="unknown"
 if [[ `uname -r` == *el5* ]]; then
-    tools/scripts/build.sh --clean --fail
+    tools/scripts/build_ami.sh --clean --fail
     buildtype="rhel5"
 elif [[ `uname -r` == *el6* ]]; then
-    tools/scripts/build.sh --clean --fail
+    tools/scripts/build_ami.sh --clean --fail
     buildtype="rhel6"
 elif [[ `uname -r` == *el7* ]]; then
-    tools/scripts/build.sh --clean --fail
+    tools/scripts/build_ami.sh --clean --fail
     buildtype="rhel7"
 elif [[ `uname -r` == *el8* ]]; then
-    tools/scripts/build.sh --clean --fail
+    tools/scripts/build_ami.sh --clean --fail
     buildtype="rhel8"
 elif [[ `uname -r` == *el9* ]]; then
-    tools/scripts/build.sh --clean --fail
+    tools/scripts/build_ami.sh --clean --fail
     buildtype="rhel9"
 fi
 
@@ -31,5 +31,5 @@ version="${1-$commit}"
 build="${2-0}"
 tarball="pdsbuild-ami-${buildtype}-b${build}-${version}.tar.gz"
 
-tools/scripts/tarcreate.sh "$tarball"
+tools/scripts/tarcreate_ami.sh "$tarball"
 chmod 444 "$tarball"
